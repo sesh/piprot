@@ -17,6 +17,10 @@ The -v arguement will make things a little more verbose
 
     ./piprot.py -v requirements.txt
 
+The -l or --lint will get angry at you about mistakes in your requirements file
+
+    ./piprot.py --lint requirements.txt
+
 Yes, you can use stdin as well
 
     pip freeze | ./piprot.py
