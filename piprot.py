@@ -3,7 +3,10 @@ from clint.textui import puts, colored
 from datetime import datetime
 from clint import args
 import json, time
-import StringIO
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 import urllib2
 import clint
 import sys
@@ -15,7 +18,7 @@ def load_requirements(req_file, lint=False):
     """
     req_dict = {}
     requirements = req_file.readlines()
-    
+
     for requirement in requirements:
         requirement = requirement.replace('\n', '').strip().split(' ')[0]
         if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
