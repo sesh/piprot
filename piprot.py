@@ -1,12 +1,24 @@
 #!/usr/bin/env python
+import ipdb
 from clint.textui import puts, colored
 from datetime import datetime
 from clint import args
 import json, time
 import StringIO
-import urllib2
+import requests
 import clint
 import sys
+
+PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
+
+
+def get_pypi_url(requirement, version=None):
+    if version:
+        return '{base}/{req}/{version}/json'.format(base=PYPI_BASE_URL,
+            req=requirement, version=version)
+    else:
+        return '{base}/{req}/json'.format(base=PYPI_BASE_URL, req=requirement)
+
 
 def load_requirements(req_file, lint=False):
     """
@@ -15,7 +27,6 @@ def load_requirements(req_file, lint=False):
     """
     req_dict = {}
     requirements = req_file.readlines()
-    
     for requirement in requirements:
         requirement = requirement.replace('\n', '').strip().split(' ')[0]
         if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
@@ -29,25 +40,23 @@ def load_requirements(req_file, lint=False):
 
     return req_dict
 
+
 def get_release_date(requirement, version=None):
     j = None
     try:
-        if version:
-            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/%s/json' % (requirement, version))
-        else:
-            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/json' % (requirement))
-    except urllib2.HTTPError:
+        j = requests.request('GET', get_pypi_url(requirement, version)).json()
+    except requests.HTTPError:
         if version:
             puts(colored.red('%s (%s) isn\'t available on PyPi anymore!' % (requirement, version)))
         else:
             puts(colored.red('%s isn\'t even on PyPi. Check that the project still exists!' % (requirement)))
         return None
     try:
-        j = json.load(j)
         d = j['urls'][0]['upload_time']
         return datetime.fromtimestamp(time.mktime(time.strptime(d, '%Y-%m-%dT%H:%M:%S')))
     except IndexError:
         puts(colored.red('%s (%s) didn\'t return a date property' % (requirement, version)))
+
 
 if __name__ == '__main__':
     # use the first file as our requirements file
