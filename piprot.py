@@ -80,6 +80,12 @@ if __name__ == '__main__':
     if '--lint' in args.all:
         lint = True
 
+    # optionally, disable colour output
+    colour = True
+    if '-c' in args.all:
+        colour = False
+    colour_proc = lambda c, s: colour and c(s) or s
+
     if req_file:
         requirements = load_requirements(req_file, lint)
         total_time_delta = 0
@@ -93,10 +99,17 @@ if __name__ == '__main__':
 
                 if verbose:
                     if time_delta > 0:
-                        puts(colored.yellow('%s (%s) is %s days out of date' % (req, version, time_delta)))
+                        puts(colour_proc(colored.yellow,
+                                         '%s (%s) is %s days out of date' % \
+                                         (req, version, time_delta)))
                     else:
-                        puts(colored.green('%s (%s) is up to date' % (req, version)))
+                        puts(colour_proc(colored.green,
+                                         '%s (%s) is up to date' % \
+                                         (req, version)))
         if total_time_delta > 0:
-            puts(colored.red("Your requirements are %s days out of date" % total_time_delta))
+            puts(colour_proc(colored.red,
+                             "Your requirements are %s days out of date" % \
+                             total_time_delta))
         else:
-            puts(colored.green("Looks like you've been keeping up to date, better go back to taming that beard!"))
+            puts(colour_proc(colored.green,
+                             "Looks like you've been keeping up to date, better go back to taming that beard!"))
