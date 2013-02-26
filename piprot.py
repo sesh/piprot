@@ -51,7 +51,6 @@ if __name__ == '__main__':
     verbose = False
     if '-v' in args.all:
         verbose = True
-        print "Verbose Mode!"
 
     if req_file:
         requirements = load_requirements(req_file)
@@ -65,7 +64,10 @@ if __name__ == '__main__':
 
             if verbose:
                 if time_delta > 0:
-                    puts(colored.orange('%s (%s) is %s days out of date' % (req, version, time_delta)))
+                    puts(colored.yellow('%s (%s) is %s days out of date' % (req, version, time_delta)))
                 else:
                     puts(colored.green('%s (%s) is up to date' % (req, version)))
-        print "Overall, you're %s days out of date." % total_time_delta
+        if total_time_delta > 0:
+            puts(colored.red("Your requirements are %s days out of date" % total_time_delta))
+        else:
+            puts(colored.green("Looks like you've been keeping up to date, better go back to taming that beard!"))
