@@ -8,7 +8,7 @@ import urllib2
 import clint
 import sys
 
-def load_requirements(req_file, lint=True):
+def load_requirements(req_file, lint=False):
     """
         Take a file and return a dict of (requirement, versions)
         based on the requirements files
@@ -25,21 +25,29 @@ def load_requirements(req_file, lint=True):
             except ValueError:
                 # what are you doing!
                 if lint:
-                    puts(colored.red('%s doesn\' have a version number' % requirement))
+                    puts(colored.red('%s doesn\'t have a version number' % requirement))
 
     return req_dict
 
 def get_release_date(requirement, version=None):
     j = None
-    if version:
-        j = urllib2.urlopen('https://pypi.python.org/pypi/%s/%s/json' % (requirement, version))
-    else:
-        j = urllib2.urlopen('https://pypi.python.org/pypi/%s/json' % (requirement))
-    j = json.load(j)
-    d = j['urls'][0]['upload_time']
-    return datetime.fromtimestamp(time.mktime(time.strptime(d, '%Y-%m-%dT%H:%M:%S')))
-
-
+    try:
+        if version:
+            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/%s/json' % (requirement, version))
+        else:
+            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/json' % (requirement))
+    except urllib2.HTTPError:
+        if version:
+            puts(colored.red('%s (%s) isn\'t available on PyPi anymore!' % (requirement, version)))
+        else:
+            puts(colored.red('%s isn\'t even on PyPi. Check that the project still exists!' % (requirement)))
+        return None
+    try:
+        j = json.load(j)
+        d = j['urls'][0]['upload_time']
+        return datetime.fromtimestamp(time.mktime(time.strptime(d, '%Y-%m-%dT%H:%M:%S')))
+    except IndexError:
+        puts(colored.red('%s (%s) didn\'t return a date property' % (requirement, version)))
 
 if __name__ == '__main__':
     # use the first file as our requirements file
@@ -64,21 +72,27 @@ if __name__ == '__main__':
     if '-v' in args.all:
         verbose = True
 
+    # wanna add a little linting (this is in early stages)
+    lint = False
+    if '--lint' in args.all:
+        lint = True
+
     if req_file:
-        requirements = load_requirements(req_file)
+        requirements = load_requirements(req_file, lint)
         total_time_delta = 0
         for req, version in requirements.items():
             latest_version = get_release_date(req)
             specified_version = get_release_date(req, version)
 
-            time_delta = (latest_version - specified_version).days
-            total_time_delta = total_time_delta + time_delta
+            if latest_version and specified_version:
+                time_delta = (latest_version - specified_version).days
+                total_time_delta = total_time_delta + time_delta
 
-            if verbose:
-                if time_delta > 0:
-                    puts(colored.yellow('%s (%s) is %s days out of date' % (req, version, time_delta)))
-                else:
-                    puts(colored.green('%s (%s) is up to date' % (req, version)))
+                if verbose:
+                    if time_delta > 0:
+                        puts(colored.yellow('%s (%s) is %s days out of date' % (req, version, time_delta)))
+                    else:
+                        puts(colored.green('%s (%s) is up to date' % (req, version)))
         if total_time_delta > 0:
             puts(colored.red("Your requirements are %s days out of date" % total_time_delta))
         else:
