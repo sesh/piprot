@@ -2,29 +2,30 @@
 from clint.textui import puts, colored
 from datetime import datetime
 from clint import args
+import json, time
+import StringIO
 import urllib2
-import json
-import time
+import clint
+import sys
 
-def load_requirements(filename, lint=True):
+def load_requirements(req_file, lint=True):
     """
-        Take a filename and return a dict of (requirement, versions)
+        Take a file and return a dict of (requirement, versions)
         based on the requirements files
     """
     req_dict = {}
-    with open(filename, 'r') as req_file:
-        requirements = req_file.readlines()
-        
-        for requirement in requirements:
-            requirement = requirement.replace('\n', '').strip().split(' ')[0]
-            if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
-                try:
-                    requirement, version = requirement.split('==')
-                    req_dict[requirement] = version
-                except ValueError:
-                    # what are you doing!
-                    if lint:
-                        puts(colored.red('%s doesn\' have a version number' % requirement))
+    requirements = req_file.readlines()
+    
+    for requirement in requirements:
+        requirement = requirement.replace('\n', '').strip().split(' ')[0]
+        if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
+            try:
+                requirement, version = requirement.split('==')
+                req_dict[requirement] = version
+            except ValueError:
+                # what are you doing!
+                if lint:
+                    puts(colored.red('%s doesn\' have a version number' % requirement))
 
     return req_dict
 
@@ -43,11 +44,22 @@ def get_release_date(requirement, version=None):
 if __name__ == '__main__':
     # use the first file as our requirements file
     req_file = None
-    try:
-        req_file = args.files[0]
-    except:
-        puts(colored.red('You need to supply at least one filename'))
 
+    c = clint.piped_in()
+    try:
+        if c:
+            # some idiot piped something in
+            req_file = StringIO.StringIO(c)
+        else:
+            # the first file is all that matters. Yep.
+            # multi file support coming in 2.0
+            req_file = open(args.files[0])
+
+    except IndexError:
+        puts(colored.red('You need to supply at least one filename'))
+        sys.exit()
+
+    # are we being annoyingly verbose?
     verbose = False
     if '-v' in args.all:
         verbose = True
