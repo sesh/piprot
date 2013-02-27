@@ -99,7 +99,7 @@ if __name__ == '__main__':
     # use the first file as our requirements file
     req_file = None
 
-    # optionally, disable colour output
+    # optionally, enable colour output
     colour = TextColours(False)
     if '-c' in args.all:
         colour.enable()
