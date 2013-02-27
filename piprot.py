@@ -7,9 +7,11 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
-import urllib2
+import requests
 import clint
 import sys
+
+PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
 
 
 class TextColours:
@@ -34,6 +36,14 @@ class TextColours:
         self.WARNING = ''
         self.FAIL = ''
         self.ENDC = ''
+
+
+def get_pypi_url(requirement, version=None):
+    if version:
+        return '{base}/{req}/{version}/json'.format(base=PYPI_BASE_URL,
+            req=requirement, version=version)
+    else:
+        return '{base}/{req}/json'.format(base=PYPI_BASE_URL, req=requirement)
 
 
 def load_requirements(req_file, lint, colour=TextColours(False)):
@@ -62,11 +72,8 @@ def load_requirements(req_file, lint, colour=TextColours(False)):
 def get_release_date(requirement, version=None, colour=TextColours(False)):
     j = None
     try:
-        if version:
-            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/%s/json' % (requirement, version))
-        else:
-            j = urllib2.urlopen('https://pypi.python.org/pypi/%s/json' % (requirement))
-    except urllib2.HTTPError:
+        j = requests.request('GET', get_pypi_url(requirement, version)).json()
+    except requests.HTTPError:
         if version:
             print '%s%s (%s) isn\'t available on PyPi anymore!%s' % \
                     (colour.FAIL, requirement, version, colour.ENDC)
@@ -76,7 +83,6 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
         return None
 
     try:
-        j = json.load(j)
         d = j['urls'][0]['upload_time']
         return datetime.fromtimestamp(time.mktime(time.strptime(d, '%Y-%m-%dT%H:%M:%S')))
     except IndexError:
