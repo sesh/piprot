@@ -10,6 +10,7 @@ except ImportError:
 import requests
 import clint
 import sys
+import os
 
 PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
 
@@ -55,16 +56,23 @@ def load_requirements(req_file, lint, colour=TextColours(False)):
     requirements = req_file.readlines()
 
     for requirement in requirements:
+        if '-r' in requirement[:3]:
+            r, filename = requirement.replace('\n', '').strip().split(' ')
+            print 'Getting a little recursive, are we?'
+            req_dict = dict(req_dict.items() + load_requirements(open(os.path.join(os.path.dirname(req_file.name), filename)), lint, colour).items())
+
         requirement = requirement.replace('\n', '').strip().split(' ')[0]
         if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
             try:
                 requirement, version = requirement.split('==')
                 req_dict[requirement] = version
+                print requirement, version
             except ValueError:
                 # what are you doing!
                 if lint:
                     print '%s%s doesn\'t have a version number%s' % \
                                 (colour.FAIL, requirement, colour.ENDC)
+
 
     return req_dict
 
@@ -103,8 +111,8 @@ if __name__ == '__main__':
         sys.exit()
 
     # use the first file as our requirements file
-    req_file = None
-
+    req_files = []
+    
     # optionally, enable colour output
     colour = TextColours(False)
     if '-c' in args.all:
@@ -118,7 +126,8 @@ if __name__ == '__main__':
         else:
             # the first file is all that matters. Yep.
             # multi file support coming in 2.0
-            req_file = open(args.files[0])
+            for f in args.files:
+                req_files.append(open(f))
 
     except IndexError:
         print '%sYou need to supply at least one filename%s' % (colour.FAIL, colour.ENDC)
@@ -134,8 +143,13 @@ if __name__ == '__main__':
     if '--lint' in args.all or '-l' in args.all:
         lint = True
 
-    if req_file:
-        requirements = load_requirements(req_file, lint, colour)
+    requirements = {}
+    # basic multi file support
+    for req_file in req_files:
+        requirements = dict(requirements.items() + load_requirements(req_file, lint, colour).items())
+
+    print requirements
+    if len(requirements) > 0:
         total_time_delta = 0
         for req, version in requirements.items():
             latest_version = get_release_date(req, colour=colour)
