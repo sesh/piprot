@@ -1,16 +1,16 @@
 #!/usr/bin/env python
-from datetime import datetime
 from clint import args
+import clint
+from datetime import datetime
 import json
+import os
+import requests
+import sys
 import time
 try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
-import requests
-import clint
-import sys
-import os
 
 PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     # use the first file as our requirements file
     req_files = []
-    
+
     # optionally, enable colour output
     colour = TextColours(False)
     if '-c' in args.all:
@@ -172,5 +172,5 @@ if __name__ == '__main__':
             print "%sYour requirements are %s days out of date%s" % \
                             (colour.FAIL, total_time_delta, colour.ENDC)
         else:
-            print "%sLooks like you've been keeping up to date, better go back to taming that beard!%s" % \
+p            print "%sLooks like you've been keeping up to date, better go back to taming that beard!%s" % \
                                     (colour.OKGREEN, colour.ENDC)
