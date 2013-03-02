@@ -1,0 +1,9 @@
+* modular, object oriented design
+* flesh out test suite, mock pypi interaction (which mocking package?)
+* use regex to parse requirements lines
+* multiprocessing support, workers == cores
+* up to date requirements on stdout
+* outdated requirements on stderr
+* logging support (with a syslog handler), so suitable for cron use
+* subcommand support, e.g. piprot-upgrade(receives processed requirements) which outputs a new requirements file with updated versions!
+  * this would be useful for automating CI builds of your project against cutting-edge requirements, alerting you to upcoming problems.
