@@ -60,7 +60,7 @@ def parse_req_file(req_file, colour=TextColours(False)):
 
         ## TODO replace with single verbose regex
 
-        # if matches recursive requirement spec., call myself again
+        # if matching recursive requirement spec., call myself again
         recursive = re.match('\s*-r\s+(?P<filename>\S+)', requirement)
         if recursive:
             try:
@@ -71,16 +71,22 @@ def parse_req_file(req_file, colour=TextColours(False)):
                 print >> sys.stderr, '{} could not be opened'.format(recursive.group('filename'))
                 continue
 
-        # if matches normal requirement line (Thing==1.2.3), update dict, continue
+        # if matching normal requirement line (Thing==1.2.3), update dict, continue
         req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
                              requirement)
         if req_match:
             req_dict[req_match.group('package')] = req_match.group('version')
             continue
 
+        # it matching VCS requirement spec., log to stderr, continue
+        vcs_match = re.match('\s*(-e){0,1}\s+(?P<vcsscheme>(svn|git|hg|bzr))\+',
+                             requirement)
+        if vcs_match:
+            print >> sys.stderr, 'VCS requirements not yet supported'
+            continue
         # if matches weird '>=1.2' format, log a warning, continue
         # if no version spec, log a warning, continue
-        # if anything else, log a warning, continue
+        # if anything else, log a warning, continue?
     return req_dict
 
 
