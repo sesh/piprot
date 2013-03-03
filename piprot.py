@@ -3,6 +3,7 @@ import argparse
 from datetime import datetime
 import os
 import requests
+import sys
 import time
 try:
     import cStringIO as StringIO
@@ -116,7 +117,7 @@ def main(req_files=[], do_lint=False, do_colour=False, verbosity=0):
 
             if verbosity:
                 if time_delta > 0:
-                    print '%s%s (%s) is %s days out of date%s' % \
+                    print >> sys.stderr, '%s%s (%s) is %s days out of date%s' % \
                       (colour.FAIL, req, version, time_delta,
                        colour.ENDC)
                 else:
@@ -124,7 +125,7 @@ def main(req_files=[], do_lint=False, do_colour=False, verbosity=0):
                         (colour.OKGREEN, req, version, colour.ENDC)
 
     if total_time_delta > 0:
-        print "%sYour requirements are %s days out of date%s" % \
+        print >> sys.stderr, "%sYour requirements are %s days out of date%s" % \
           (colour.FAIL, total_time_delta, colour.ENDC)
     else:
         print "%sLooks like you've been keeping up to date, better go back to taming that beard!%s" % \
