@@ -2,6 +2,7 @@
 import argparse
 from datetime import datetime
 import os
+import re
 import requests
 import sys
 import time
@@ -45,31 +46,41 @@ def get_pypi_url(requirement, version=None):
         return '{base}/{req}/json'.format(base=PYPI_BASE_URL, req=requirement)
 
 
-def parse_requirements_file(req_file, lint, colour=TextColours(False)):
+def parse_req_file(req_file, colour=TextColours(False)):
     """Take a file and return a dict of (requirement, versions) based
     on the files requirements specs.
+
+    TODO support pip's --index-url and --find-links requirements lines.
+    TODO support Git, Subversion, Bazaar, Mercurial requirements lines.
     """
     req_dict = {}
     requirements = req_file.readlines()
-
-    # TODO parse with regex
     for requirement in requirements:
-        if '-r' in requirement[:3]:
-            r, filename = requirement.replace('\n', '').strip().split(' ')
-            #print 'Getting a little recursive, are we?'
-            req_dict.update(parse_requirements_file(open(os.path.join(os.path.dirname(req_file.name), filename)), lint, colour=colour))
+        if requirement.strip().startswith('#'): continue
 
-        requirement = requirement.replace('\n', '').strip().split(' ')[0]
-        if requirement and requirement[0] not in ['#', '-'] and 'git' not in requirement:
+        ## TODO replace with single verbose regex
+
+        # if matches recursive requirement spec., call myself again
+        recursive = re.match('\s*-r\s+(?P<filename>\S+)', requirement)
+        if recursive:
             try:
-                requirement, version = requirement.split('==')
-                req_dict[requirement] = version
-                #print requirement, version
-            except ValueError:
-                # what are you doing!
-                if lint:
-                    print '%s%s doesn\'t have a version number%s' % \
-                                (colour.FAIL, requirement, colour.ENDC)
+                r_req_file = open(os.path.join(os.path.dirname(req_file.name),
+                                               recursive.group('filename')))
+                req_dict.update(parse_req_file(r_req_file, colour=colour))
+            except IOError:
+                print >> sys.stderr, '{} could not be opened'.format(recursive.group('filename'))
+                continue
+
+        # if matches normal requirement line (Thing==1.2.3), update dict, continue
+        req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
+                             requirement)
+        if req_match:
+            req_dict[req_match.group('package')] = req_match.group('version')
+            continue
+
+        # if matches weird '>=1.2' format, log a warning, continue
+        # if no version spec, log a warning, continue
+        # if anything else, log a warning, continue
     return req_dict
 
 
@@ -93,13 +104,13 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
         print '%s%s (%s) didn\'t return a date property%s' % (colour.FAIL, requirement, version, colour.ENDC)
 
 
-def main(req_files=[], do_lint=False, do_colour=False, verbosity=0):
+def main(req_files=[], do_colour=False, verbosity=0):
     """Process a list of requirements to determine how out of date they are.
     """
     colour = TextColours(do_colour)
     requirements = {}
     for req_file in req_files:
-        requirements.update(parse_requirements_file(req_file, do_lint, colour))
+        requirements.update(parse_req_file(req_file, colour))
         req_file.close()
 
     # close all files.
@@ -136,8 +147,6 @@ if __name__ == '__main__':
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
         )
-    cli_parser.add_argument('-l', '--lint', action='store_true',
-                            help='lint the requirements')
     cli_parser.add_argument('-c', '--colour', '--color', action='store_true',
                             help='coloured output')
     cli_parser.add_argument('-v', '--verbose', action='count',
@@ -147,5 +156,5 @@ if __name__ == '__main__':
     cli_args = cli_parser.parse_args()
 
     # call the main function to kick off the real work
-    main(req_files=cli_args.file, do_lint=cli_args.lint,
-         do_colour=cli_args.colour, verbosity=cli_args.verbose)
+    main(req_files=cli_args.file, do_colour=cli_args.colour,
+         verbosity=cli_args.verbose)
