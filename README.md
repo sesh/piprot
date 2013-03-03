@@ -24,3 +24,7 @@ The -l or --lint will get angry at you about mistakes in your requirements file
 Yes, you can use stdin as well
 
     pip freeze | ./piprot.py
+
+### Tests
+
+To run the test suite, execute `python -m unittest discover`, within the project directory.
