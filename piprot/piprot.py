@@ -10,9 +10,10 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
+import simplejson
 
 VERSION = "0.1.1"
-PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
+PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 
 class TextColours:
@@ -109,7 +110,9 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
                 ' still exists!%s' % \
                 (colour.FAIL, requirement, colour.ENDC)
         return None
-
+    except simplejson.decoder.JSONDecodeError:
+        print '%sDecoding the JSON response for %s (%s) failed%s' % \
+                (colour.FAIL, requirement, version, colour.ENDC)
     try:
         d = j['urls'][0]['upload_time']
         return datetime.fromtimestamp(time.mktime(
