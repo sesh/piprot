@@ -57,7 +57,8 @@ def parse_req_file(req_file, colour=TextColours(False)):
     req_dict = {}
     requirements = req_file.readlines()
     for requirement in requirements:
-        if requirement.strip().startswith('#'): continue
+        if requirement.strip().startswith('#'):
+            continue
 
         ## TODO replace with single verbose regex
 
@@ -69,10 +70,12 @@ def parse_req_file(req_file, colour=TextColours(False)):
                                                recursive.group('filename')))
                 req_dict.update(parse_req_file(r_req_file, colour=colour))
             except IOError:
-                print >> sys.stderr, '{} could not be opened'.format(recursive.group('filename'))
+                print >> sys.stderr, '{} could not be opened'.format(
+                    recursive.group('filename')
+                )
                 continue
 
-        # if matching normal requirement line (Thing==1.2.3), update dict, continue
+        # if matching requirement line (Thing==1.2.3), update dict, continue
         req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
                              requirement)
         if req_match:
@@ -80,8 +83,10 @@ def parse_req_file(req_file, colour=TextColours(False)):
             continue
 
         # it matching VCS requirement spec., log to stderr, continue
-        vcs_match = re.match('\s*(-e){0,1}\s+(?P<vcsscheme>(svn|git|hg|bzr))\+',
-                             requirement)
+        vcs_match = re.match(
+            '\s*(-e){0,1}\s+(?P<vcsscheme>(svn|git|hg|bzr))\+',
+            requirement)
+
         if vcs_match:
             print >> sys.stderr, 'VCS requirements not yet supported'
             continue
@@ -98,17 +103,21 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
     except requests.HTTPError:
         if version:
             print '%s%s (%s) isn\'t available on PyPi anymore!%s' % \
-                    (colour.FAIL, requirement, version, colour.ENDC)
+                (colour.FAIL, requirement, version, colour.ENDC)
         else:
-            print '%s%s isn\'t even on PyPi. Check that the project still exists!%s' % \
-                    (colour.FAIL, requirement, colour.ENDC)
+            print '%s%s isn\'t even on PyPi. Check that the project' + \
+                ' still exists!%s' % \
+                (colour.FAIL, requirement, colour.ENDC)
         return None
 
     try:
         d = j['urls'][0]['upload_time']
-        return datetime.fromtimestamp(time.mktime(time.strptime(d, '%Y-%m-%dT%H:%M:%S')))
+        return datetime.fromtimestamp(time.mktime(
+            time.strptime(d, '%Y-%m-%dT%H:%M:%S')
+        ))
     except IndexError:
-        print '%s%s (%s) didn\'t return a date property%s' % (colour.FAIL, requirement, version, colour.ENDC)
+        print '%s%s (%s) didn\'t return a date property%s' % \
+            (colour.FAIL, requirement, version, colour.ENDC)
 
 
 def main(req_files=[], do_colour=False, verbosity=0):
@@ -136,26 +145,27 @@ def main(req_files=[], do_colour=False, verbosity=0):
             if verbosity:
                 if time_delta > 0:
                     print >> sys.stderr, '%s%s (%s) is %s days out of date%s' % \
-                      (colour.FAIL, req, version, time_delta,
-                       colour.ENDC)
+                        (colour.FAIL, req, version, time_delta,
+                            colour.ENDC)
                 else:
                     print '%s%s (%s) is up to date%s' % \
                         (colour.OKGREEN, req, version, colour.ENDC)
 
     if total_time_delta > 0:
         print >> sys.stderr, "%sYour requirements are %s days out of date%s" % \
-          (colour.FAIL, total_time_delta, colour.ENDC)
+            (colour.FAIL, total_time_delta, colour.ENDC)
     else:
-        print "%sLooks like you've been keeping up to date, better go back to taming that beard!%s" % \
-          (colour.OKGREEN, colour.ENDC)
+        print "%sLooks like you've been keeping up to date, better go" \
+            + " back to taming that beard!%s" % \
+            (colour.OKGREEN, colour.ENDC)
 
 
 def piprot():
     print "piprot %s" % VERSION
-    
+
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
-        )
+    )
     cli_parser.add_argument('-c', '--colour', '--color', action='store_true',
                             help='coloured output')
     cli_parser.add_argument('-v', '--verbose', action='count',
@@ -163,7 +173,7 @@ def piprot():
     cli_parser.add_argument('file', nargs='+', type=argparse.FileType(),
                             help='requirements file(s), use `-` for stdin')
     cli_args = cli_parser.parse_args()
-    
+
     # call the main function to kick off the real work
     main(req_files=cli_args.file, do_colour=cli_args.colour,
          verbosity=cli_args.verbose)
