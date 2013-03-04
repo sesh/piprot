@@ -11,7 +11,7 @@ try:
 except ImportError:
     import StringIO
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi/'
 
 
