@@ -1,0 +1,11 @@
+# Production Environment
+
+# include _base.txt
+-r _base.txt
+
+
+# commoncode / entropy
+git+ssh://git@github.com/commoncode/entropy.git@d6f0672a05e0078428920745ccd2a5a69606c05a
+
+# commoncode / posts
+git+ssh://git@github.com/commoncode/posts.git@2f9ca01daa0e688b881d8092bca545c8f8ad6be4

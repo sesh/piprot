@@ -1,0 +1,44 @@
+# Base Environment
+
+Markdown==2.2.1
+Pillow==1.7.7
+South==0.7.6
+amqp==1.0.8
+anyjson==0.3.3
+billiard==2.7.3.20
+distribute==0.6.34
+django-extensions==1.0.0
+django-filebrowser==3.5.1
+django-grappelli==2.4.3
+easy-thumbnails==1.1
+ipdb==0.7
+kombu==2.5.6
+pycrypto==2.6
+python-dateutil==1.5
+pytz==2012j
+requests==0.14.1
+ssh==1.8.0
+loremipsum==1.0.2
+
+# Django (Latest 1.5 - Updated Feb. 12)
+git+git://github.com/django/django.git@934f35f1f958f48a36eff64b13e43a9d55a476e0
+
+# Tastypie - forked version with auth.AUTH_USER_MODEL support
+# important: swap to a proper branch when support is merged in
+-e git://github.com/marblar/django-tastypie.git@6109210a4a7680a7f1ae0a9cc5755ddcaaf63b67#egg=django_tastypie-dev
+
+MySQL-python==1.2.4b3
+celery==3.0.12
+django-celery==3.0.11
+gunicorn==0.14.6
+wsgiref==0.1.2
+python-memcached==1.48
+
+# commoncode / infrastruction
+git+ssh://git@github.com/commoncode/infrastruction.git@43b66892fc2988d89471632fbbe3caa993902d5d
+
+# commoncode / camplight
+git+ssh://git@github.com/commoncode/camplight.git@ae8d7332bc976163a9ed36b07614c45168e3a9f9
+
+# commoncode / django-tracking
+git+ssh://git@github.com/commoncode/django-tracking.git@3e21cf1cdd865c0ee265f7080eb15813e5329177
