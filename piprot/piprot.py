@@ -12,7 +12,7 @@ except ImportError:
     import StringIO
 import simplejson
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 
@@ -113,6 +113,8 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
     except simplejson.decoder.JSONDecodeError:
         print '%sDecoding the JSON response for %s (%s) failed%s' % \
                 (colour.FAIL, requirement, version, colour.ENDC)
+        return None
+
     try:
         d = j['urls'][0]['upload_time']
         return datetime.fromtimestamp(time.mktime(
