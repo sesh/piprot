@@ -10,10 +10,11 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
-import simplejson
+import json
 
 VERSION = "0.1.2"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
+NOTIFY_URL = 'http://piprot.com/'
 
 
 class TextColours:
@@ -110,7 +111,8 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
                 ' still exists!%s' % \
                 (colour.FAIL, requirement, colour.ENDC)
         return None
-    except simplejson.decoder.JSONDecodeError:
+    #TODO: Catch something more specific
+    except:
         print '%sDecoding the JSON response for %s (%s) failed%s' % \
                 (colour.FAIL, requirement, version, colour.ENDC)
         return None
@@ -123,9 +125,35 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
     except IndexError:
         print '%s%s (%s) didn\'t return a date property%s' % \
             (colour.FAIL, requirement, version, colour.ENDC)
+        return None
 
 
-def main(req_files=[], do_colour=False, verbosity=0):
+def notify_me(requirements, project_name="example"):
+    j = json.dumps(requirements)
+    print 'piprot notify will send you a weekly email with a summary of your ' \
+            + 'requirements and their status'
+
+    email = raw_input('What email address would you like notifications sent to? ')
+    if len(email) < 3 or "@" not in email:
+        print >> sys.stderr, "Not an email address"
+        sys.exit()
+
+    project = raw_input('What is the name of your project [%s]? ' % project_name)
+    if len(project) == 0:
+        project = project_name
+
+    payload = {}
+    payload['email'] = email
+    payload['project'] = project
+    payload['requirements'] = requirements
+
+    headers = {'content-type': 'application/json'}
+    r = requests.post(NOTIFY_URL, data=json.dumps(payload), headers=headers).json()
+    print r['project']
+    print r['status']
+
+
+def main(req_files=[], do_colour=False, verbosity=0, notify=False):
     """Process a list of requirements to determine how out of date they are.
     """
     colour = TextColours(do_colour)
@@ -133,6 +161,10 @@ def main(req_files=[], do_colour=False, verbosity=0):
     for req_file in req_files:
         requirements.update(parse_req_file(req_file, colour))
         req_file.close()
+
+    if notify:
+        notify_me(requirements)
+        sys.exit()
 
     # close all files.
     # remove duplicate requirements lines.
@@ -173,6 +205,8 @@ def piprot():
     )
     cli_parser.add_argument('-c', '--colour', '--color', action='store_true',
                             help='coloured output')
+    cli_parser.add_argument('--notify', action='store_true',
+                            help='subscribe to weekly updates about your requirements')
     cli_parser.add_argument('-v', '--verbose', action='count',
                             help='verbosity, can be supplied more than once')
     cli_parser.add_argument('file', nargs='+', type=argparse.FileType(),
@@ -181,7 +215,7 @@ def piprot():
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, do_colour=cli_args.colour,
-         verbosity=cli_args.verbose)
+         verbosity=cli_args.verbose, notify=cli_args.notify)
 
 if __name__ == '__main__':
     piprot()
