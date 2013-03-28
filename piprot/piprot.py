@@ -12,9 +12,9 @@ except ImportError:
     import StringIO
 import json
 
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
-NOTIFY_URL = 'http://piprot.com/'
+NOTIFY_URL = 'http://localhost:9000/'
 
 
 class TextColours:
