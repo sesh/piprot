@@ -104,17 +104,17 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
         j = requests.request('GET', get_pypi_url(requirement, version)).json()
     except requests.HTTPError:
         if version:
-            print '%s%s (%s) isn\'t available on PyPi anymore!%s' % \
-                (colour.FAIL, requirement, version, colour.ENDC)
+            print ('%s%s (%s) isn\'t available on PyPi anymore!%s' %
+                (colour.FAIL, requirement, version, colour.ENDC))
         else:
-            print '%s%s isn\'t even on PyPi. Check that the project' + \
-                ' still exists!%s' % \
-                (colour.FAIL, requirement, colour.ENDC)
+            print ('%s%s isn\'t even on PyPi. Check that the project'
+                ' still exists!%s' %
+                (colour.FAIL, requirement, colour.ENDC))
         return None
     #TODO: Catch something more specific
     except:
-        print '%sDecoding the JSON response for %s (%s) failed%s' % \
-                (colour.FAIL, requirement, version, colour.ENDC)
+        print ('%sDecoding the JSON response for %s (%s) failed%s' %
+                (colour.FAIL, requirement, version, colour.ENDC))
         return None
 
     try:
@@ -123,15 +123,15 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
             time.strptime(d, '%Y-%m-%dT%H:%M:%S')
         ))
     except IndexError:
-        print '%s%s (%s) didn\'t return a date property%s' % \
-            (colour.FAIL, requirement, version, colour.ENDC)
+        print ('%s%s (%s) didn\'t return a date property%s' %
+            (colour.FAIL, requirement, version, colour.ENDC))
         return None
 
 
 def notify_me(requirements, project_name="example"):
     j = json.dumps(requirements)
-    print 'piprot notify will send you a weekly email with a summary of your ' \
-            + 'requirements and their status'
+    print ('piprot notify will send you a weekly email with a summary of your '
+            'requirements and their status')
 
     email = raw_input('What email address would you like notifications sent to? ')
     if len(email) < 3 or "@" not in email:
@@ -181,20 +181,20 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
 
             if verbosity:
                 if time_delta > 0:
-                    print >> sys.stderr, '%s%s (%s) is %s days out of date%s' % \
+                    print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
                         (colour.FAIL, req, version, time_delta,
-                            colour.ENDC)
+                            colour.ENDC))
                 else:
-                    print '%s%s (%s) is up to date%s' % \
-                        (colour.OKGREEN, req, version, colour.ENDC)
+                    print ('%s%s (%s) is up to date%s' %
+                        (colour.OKGREEN, req, version, colour.ENDC))
 
     if total_time_delta > 0:
-        print >> sys.stderr, "%sYour requirements are %s days out of date%s" % \
-            (colour.FAIL, total_time_delta, colour.ENDC)
+        print >> sys.stderr, ("%sYour requirements are %s days out of date%s" %
+            (colour.FAIL, total_time_delta, colour.ENDC))
     else:
-        print "%sLooks like you've been keeping up to date, better go" \
-            + " back to taming that beard!%s" % \
-            (colour.OKGREEN, colour.ENDC)
+        print ("%sLooks like you've been keeping up to date, time for a "
+            "delicious beverage!%s" %
+            (colour.OKGREEN, colour.ENDC))
 
 
 def piprot():
