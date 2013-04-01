@@ -209,9 +209,19 @@ def piprot():
                             help='subscribe to weekly updates about your requirements')
     cli_parser.add_argument('-v', '--verbose', action='count',
                             help='verbosity, can be supplied more than once')
-    cli_parser.add_argument('file', nargs='*', type=argparse.FileType(),
-                            default=[open('requirements.txt')],
+
+    # if there is a requirements.txt file, use it by default. Otherwise print
+    # usage if there are no arguments.
+    nargs = '+'
+    default = None
+    if os.path.isfile('requirements.txt'):
+        nargs = '*'
+        default = [open('requirements.txt')]
+
+    cli_parser.add_argument('file', nargs=nargs, type=argparse.FileType(),
+                            default=default,
                             help='requirements file(s), use `-` for stdin')
+
     cli_args = cli_parser.parse_args()
 
     # call the main function to kick off the real work
