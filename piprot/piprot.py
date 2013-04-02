@@ -153,7 +153,7 @@ def notify_me(requirements, project_name="example"):
     print r['status']
 
 
-def main(req_files=[], do_colour=False, verbosity=0, notify=False):
+def main(req_files=[], do_colour=False, verbosity=0, notify=False, quiet=False):
     """Process a list of requirements to determine how out of date they are.
     """
     colour = TextColours(do_colour)
@@ -179,13 +179,14 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
             time_delta = (latest_version - specified_version).days
             total_time_delta = total_time_delta + time_delta
 
-            if time_delta > 0:
-                print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
-                    (colour.FAIL, req, version, time_delta,
-                        colour.ENDC))
-            elif verbosity:
-                print ('%s%s (%s) is up to date%s' %
-                    (colour.OKGREEN, req, version, colour.ENDC))
+            if not quiet:
+                if time_delta > 0:
+                    print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
+                        (colour.FAIL, req, version, time_delta,
+                            colour.ENDC))
+                elif verbosity:
+                    print ('%s%s (%s) is up to date%s' %
+                        (colour.OKGREEN, req, version, colour.ENDC))
 
     if total_time_delta > 0:
         print >> sys.stderr, ("%sYour requirements are %s days out of date%s" %
@@ -208,13 +209,16 @@ def piprot():
                             help='subscribe to weekly updates about your requirements')
     cli_parser.add_argument('-v', '--verbose', action='count',
                             help='verbosity, can be supplied more than once')
+    cli_parser.add_argument('-q', '--quiet', action='store_true',
+                            help='quiet, only print total days out of date')
     cli_parser.add_argument('file', nargs='+', type=argparse.FileType(),
                             help='requirements file(s), use `-` for stdin')
     cli_args = cli_parser.parse_args()
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, do_colour=cli_args.colour,
-         verbosity=cli_args.verbose, notify=cli_args.notify)
+         verbosity=cli_args.verbose, notify=cli_args.notify,
+         quiet=cli_args.quiet)
 
 if __name__ == '__main__':
     piprot()
