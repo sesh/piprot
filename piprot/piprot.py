@@ -179,14 +179,13 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
             time_delta = (latest_version - specified_version).days
             total_time_delta = total_time_delta + time_delta
 
-            if verbosity:
-                if time_delta > 0:
-                    print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
-                        (colour.FAIL, req, version, time_delta,
-                            colour.ENDC))
-                else:
-                    print ('%s%s (%s) is up to date%s' %
-                        (colour.OKGREEN, req, version, colour.ENDC))
+            if time_delta > 0:
+                print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
+                    (colour.FAIL, req, version, time_delta,
+                        colour.ENDC))
+            elif verbosity:
+                print ('%s%s (%s) is up to date%s' %
+                    (colour.OKGREEN, req, version, colour.ENDC))
 
     if total_time_delta > 0:
         print >> sys.stderr, ("%sYour requirements are %s days out of date%s" %
