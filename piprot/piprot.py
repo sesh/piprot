@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 from datetime import datetime
 import os
@@ -9,7 +10,10 @@ import time
 try:
     import cStringIO as StringIO
 except ImportError:
-    import StringIO
+    try:
+        import StringIO
+    except ImportError:
+        from io import StringIO
 import json
 
 VERSION = "0.1.3"
@@ -149,8 +153,8 @@ def notify_me(requirements, project_name="example"):
 
     headers = {'content-type': 'application/json'}
     r = requests.post(NOTIFY_URL, data=json.dumps(payload), headers=headers).json()
-    print r['project']
-    print r['status']
+    print(r['project'])
+    print(r['status'])
 
 
 def main(req_files=[], do_colour=False, verbosity=0, notify=False):
@@ -181,24 +185,22 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
 
             if verbosity:
                 if time_delta > 0:
-                    print >> sys.stderr, ('%s%s (%s) is %s days out of date%s' %
-                        (colour.FAIL, req, version, time_delta,
-                            colour.ENDC))
+                    print('%s%s (%s) is %s days out of date%s' %
+                          (colour.FAIL, req, version, time_delta, colour.ENDC), file=sys.stderr)
                 else:
-                    print ('%s%s (%s) is up to date%s' %
+                    print('%s%s (%s) is up to date%s' %
                         (colour.OKGREEN, req, version, colour.ENDC))
 
     if total_time_delta > 0:
-        print >> sys.stderr, ("%sYour requirements are %s days out of date%s" %
-            (colour.FAIL, total_time_delta, colour.ENDC))
+        print("%sYour requirements are %s days out of date%s" %
+              (colour.FAIL, total_time_delta, colour.ENDC), file=sys.stderr)
     else:
-        print ("%sLooks like you've been keeping up to date, time for a "
-            "delicious beverage!%s" %
-            (colour.OKGREEN, colour.ENDC))
+        print("%sLooks like you've been keeping up to date, time for a "
+              "delicious beverage!%s" % (colour.OKGREEN, colour.ENDC))
 
 
 def piprot():
-    print "piprot %s" % VERSION
+    print("piprot %s" % VERSION)
 
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
