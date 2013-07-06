@@ -90,7 +90,7 @@ def parse_req_file(req_file, colour=TextColours(False)):
 
         # it matching VCS requirement spec., log to stderr, continue
         vcs_match = re.match(
-            '\s*(?:(-e){0,1}\s+)?(?P<vcsscheme>(svn|git|hg|bzr))\+',
+            '\s*(?:(-e){0,1}\s+)?(?P<vcsscheme>(svn|git|hg|bzr))(?:\+|://)',
             requirement)
 
         if vcs_match:
