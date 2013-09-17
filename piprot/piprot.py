@@ -21,30 +21,6 @@ PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 NOTIFY_URL = 'http://localhost:9000/'
 
 
-class TextColours:
-    def __init__(self, enabled=False):
-        if enabled:
-            self.enable()
-        else:
-            self.disable()
-
-    def enable(self):
-        self.HEADER = '\033[95m'
-        self.OKBLUE = '\033[94m'
-        self.OKGREEN = '\033[92m'
-        self.WARNING = '\033[93m'
-        self.FAIL = '\033[91m'
-        self.ENDC = '\033[0m'
-
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.ENDC = ''
-
-
 def get_pypi_url(requirement, version=None):
     if version:
         return '{base}/{req}/{version}/json'.format(base=PYPI_BASE_URL,
@@ -53,7 +29,7 @@ def get_pypi_url(requirement, version=None):
         return '{base}/{req}/json'.format(base=PYPI_BASE_URL, req=requirement)
 
 
-def parse_req_file(req_file, colour=TextColours(False), verbatim=False):
+def parse_req_file(req_file, verbatim=False):
     """Take a file and return a dict of (requirement, versions) based
     on the files requirements specs.
 
@@ -70,31 +46,38 @@ def parse_req_file(req_file, colour=TextColours(False), verbatim=False):
         if req_match:
             req_list.append((req_match.group('package'), 
                              req_match.group('version')))
+        if requirement_no_comments.startswith('-r'):
+            base_dir = os.path.dirname(os.path.abspath(req_file.name))
+            file_name = requirement_no_comments.split(' ')[1]
+            new_path = os.path.join(base_dir, file_name)
+            try:
+                req_list.append((None, requirement))
+                req_list.extend(parse_req_file(open(new_path), verbatim=verbatim))
+            except IOError:
+                print('Failed to import {}'.format(file_name))
         else:
             req_list.append((None, requirement))
     return req_list
 
 
-def get_version_and_release_date(requirement, version=None, colour=TextColours(False), verbose=False):
+def get_version_and_release_date(requirement, version=None, verbose=False):
     response = None
     try:
         response = requests.get(get_pypi_url(requirement, version)).json()
     except requests.HTTPError:
         if version:
             if verbose:
-                print ('%s%s (%s) isn\'t available on PyPi anymore!%s' %
-                      (colour.FAIL, requirement, version, colour.ENDC))
+                print ('{} ({}) isn\'t available on PyPi anymore!'.format(
+                        requirement, version)
         else:
             if verbose:
-                print ('%s%s isn\'t even on PyPi. Check that the project'
-                ' still exists!%s' %
-                (colour.FAIL, requirement, colour.ENDC))
+                print ('{} isn\'t even on PyPi. Check that the project still exists!'.format(
+                        requirement)
         return None, None
     #TODO: Catch something more specific
     except:
         if verbose:
-            print ('%sDecoding the JSON response for %s (%s) failed%s' %
-                  (colour.FAIL, requirement, version, colour.ENDC))
+            print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version)
         return None, None
 
     try:
@@ -108,29 +91,31 @@ def get_version_and_release_date(requirement, version=None, colour=TextColours(F
         ))
     except IndexError:
         if verbose:
-            print ('%s%s (%s) didn\'t return a date property%s' %
-                (colour.FAIL, requirement, version, colour.ENDC))
+            print ('{} ({}) didn\'t return a date property'.format(requirement, version)
         return None, None
 
 
-def main(req_files=[], do_colour=False, verbosity=0, latest=False, verbatim=False):
+def main(req_files=[]verbosity=0, latest=False, verbatim=False, print_only=True):
     """
         Process a list of requirements to determine how out of date they are.
     """
-    colour = TextColours(do_colour)
-
     requirements = []
     for req_file in req_files:
-        requirements.extend(parse_req_file(req_file, colour))
+        requirements.extend(parse_req_file(req_file))
         req_file.close()
 
     total_time_delta = 0
     for req, version in requirements:
-        if verbatim and not req:
+        if print_only:
+            if req:
+                print("{}=={}".format(req, version))
+            else:
+                print(version)
+        elif verbatim and not req:
             sys.stdout.write(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req, colour=colour, verbose=(verbosity > 0))
-            specified_version, specified_release_date = get_version_and_release_date(req, version, colour=colour, verbose=(verbosity > 0))
+            latest_version, latest_release_date = get_version_and_release_date(req verbose=(verbosity > 0))
+            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=(verbosity > 0))
 
             if latest_release_date and specified_release_date:
                 time_delta = (latest_release_date - specified_release_date).days
@@ -138,11 +123,9 @@ def main(req_files=[], do_colour=False, verbosity=0, latest=False, verbatim=Fals
 
                 if verbosity:
                     if time_delta > 0:
-                        print('%s%s (%s) is %s days out of date%s' %
-                              (colour.FAIL, req, version, time_delta, colour.ENDC), file=sys.stderr)
+                        print('{} ({}) is {} days out of date'.format(req, version, time_delta))
                     else:
-                        print('%s%s (%s) is up to date%s' %
-                            (colour.OKGREEN, req, version, colour.ENDC))
+                        print('{} ({}) is up to date'.format(req, version))
 
                 if latest and latest_version != specified_version:
                     print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
@@ -158,11 +141,9 @@ def main(req_files=[], do_colour=False, verbosity=0, latest=False, verbatim=Fals
     else:
         verbatim = ""
     if total_time_delta > 0:
-        print("%s%sYour requirements are %s days out of date%s" %
-              (verbatim, colour.FAIL, total_time_delta, colour.ENDC), file=sys.stderr)
+        print("{}Your requirements are {} days out of date".format(verbatim, total_time_delta))
     else:
-        print("%s%sLooks like you've been keeping up to date, time for a "
-              "delicious beverage!%s" % (verbatim, colour.OKGREEN, colour.ENDC))
+        print("{}Looks like you've been keeping up to date, time for a delicious beverage!".format(verbatim))
 
 
 def piprot():
