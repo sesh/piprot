@@ -5,6 +5,8 @@ How rotten are your requirements?
 
 ![piprot Demo](http://i.imgur.com/kewPaFa.gif)
 
+![Passing?](https://api.travis-ci.org/sesh/piprot.png)
+
 ### Installation
 
 piprot can now be installed
