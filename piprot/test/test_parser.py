@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import unittest
-from StringIO import StringIO
+from six import StringIO
 from piprot.piprot import parse_req_file
 
 class TestRequirementsParser(unittest.TestCase):
