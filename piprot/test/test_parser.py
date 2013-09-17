@@ -36,7 +36,7 @@ class TestRequirementsParser(unittest.TestCase):
     def test_requirements_file_verbose(self):
         d = parse_req_file(open(os.path.join(os.path.dirname(__file__), 'files/_develop.txt')), verbatim=True)
         comments = [x[1] for x in d if not x[0]]
-        self.assertTrue('# Development Requirments\n' in comments)
+        self.assertTrue('# Development Requirements\n' in comments)
 
 if __name__ == '__main__':
     unittest.main()

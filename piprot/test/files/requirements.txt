@@ -1,4 +1,4 @@
 -r _develop.txt
 
 Django==1.5.4
-request==1.2.3
+requests==1.2.3

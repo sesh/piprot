@@ -16,7 +16,7 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.1.4"
+VERSION = "0.2.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 NOTIFY_URL = 'http://localhost:9000/'
 
@@ -96,13 +96,13 @@ def get_version_and_release_date(requirement, version=None, verbose=False):
         return None, None
 
 
-def main(req_files=[], verbosity=0, latest=False, verbatim=False, print_only=True):
+def main(req_files=[], verbose=False, latest=False, verbatim=False, print_only=False):
     """
         Process a list of requirements to determine how out of date they are.
     """
     requirements = []
     for req_file in req_files:
-        requirements.extend(parse_req_file(req_file))
+        requirements.extend(parse_req_file(req_file, verbatim=verbatim))
         req_file.close()
 
     total_time_delta = 0
@@ -115,14 +115,14 @@ def main(req_files=[], verbosity=0, latest=False, verbatim=False, print_only=Tru
         elif verbatim and not req:
             sys.stdout.write(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req, verbose=(verbosity > 0))
-            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=(verbosity > 0))
+            latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose)
+            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=verbose)
 
             if latest_release_date and specified_release_date:
                 time_delta = (latest_release_date - specified_release_date).days
                 total_time_delta = total_time_delta + time_delta
 
-                if verbosity:
+                if verbose:
                     if time_delta > 0:
                         print('{} ({}) is {} days out of date'.format(req, version, time_delta))
                     else:
@@ -134,7 +134,7 @@ def main(req_files=[], verbosity=0, latest=False, verbatim=False, print_only=Tru
                     print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
                 elif verbatim:
                     print('{}=={}'.format(req, specified_version))
-            else:
+            elif verbatim:
                 print('{}=={} # Error checking latest version'.format(req, version))
 
     if verbatim:
@@ -151,9 +151,7 @@ def piprot():
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
     )
-    cli_parser.add_argument('-c', '--colour', '--color', action='store_true',
-                            help='coloured output')
-    cli_parser.add_argument('-v', '--verbose', action='count',
+    cli_parser.add_argument('-v', '--verbose', action='store_true',
                             help='verbosity, can be supplied more than once')
     cli_parser.add_argument('-l', '--latest', action='store_true',
                             help='print the lastest available version for out of date requirements')
@@ -169,8 +167,7 @@ def piprot():
         default = [open('requirements.txt')]
 
     cli_parser.add_argument('file', nargs=nargs, type=argparse.FileType(),
-                            default=default,
-                            help='requirements file(s), use `-` for stdin')
+                            default=default, help='requirements file(s), use `-` for stdin')
 
     cli_args = cli_parser.parse_args()
 
@@ -178,8 +175,8 @@ def piprot():
         sys.exit('--verbatim only allowed for single requirements files')
 
     # call the main function to kick off the real work
-    main(req_files=cli_args.file, do_colour=cli_args.colour,
-         verbosity=cli_args.verbose, latest=cli_args.latest, verbatim=cli_args.verbatim)
+    main(req_files=cli_args.file, verbose=cli_args.verbose,
+         latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False)
 
 if __name__ == '__main__':
     piprot()
