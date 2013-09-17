@@ -3,7 +3,7 @@ piprot
 
 How rotten are your requirements?
 
-![piprot Screenshot](http://i.imgur.com/JR9yCul.png)
+![piprot Demo](http://i.imgur.com/kewPaFa.gif)
 
 ### Installation
 
