@@ -47,4 +47,4 @@ Yep, you can use stdin as well
 
 To run the test suite, execute `python -m unittest discover`, within the project directory.
 
-Test coverage is pretty low at the moment.
+Please ensure that the (limited) tests are all passing before making a pull request. Feel free to add more.
