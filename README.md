@@ -20,15 +20,23 @@ piprot will always use the first requirements file you include on the comand lin
 
     piprot requirements.txt
 
-The -v arguement will make things a little more verbose
+The --verbose arguement will make things a little more verbose
 
-    piprot -v requirements.txt
+    piprot --verbose requirements.txt
 
-The -l or --lint will get angry at you about mistakes in your requirements file
+The --verbatim arguement will output your complete requirements file, with some comments about the out of date nature of your packages
 
-    piprot --lint requirements.txt
+    piprot --verbatim
 
-Yes, you can use stdin as well
+The --latest argument will output just the package and version number
+
+    piprot --latest
+
+Use the --verbatim and --latest options together to get your complete requirements file, with fully updated requirements
+
+    piprot --verbatim --latest
+
+Yep, you can use stdin as well
 
     pip freeze | piprot -
 
