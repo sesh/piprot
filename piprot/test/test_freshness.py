@@ -2,6 +2,7 @@
 import unittest
 from piprot.piprot import get_version_and_release_date
 
+@unittest.skip
 class TestFreshness(unittest.TestCase):
     def setUp(self):
         pass

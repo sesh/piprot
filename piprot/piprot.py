@@ -46,16 +46,17 @@ def parse_req_file(req_file, verbatim=False):
         if req_match:
             req_list.append((req_match.group('package'), 
                              req_match.group('version')))
-        if requirement_no_comments.startswith('-r'):
+        elif requirement_no_comments.startswith('-r'):
             base_dir = os.path.dirname(os.path.abspath(req_file.name))
             file_name = requirement_no_comments.split(' ')[1]
             new_path = os.path.join(base_dir, file_name)
             try:
-                req_list.append((None, requirement))
+                if verbatim:
+                    req_list.append((None, requirement))
                 req_list.extend(parse_req_file(open(new_path), verbatim=verbatim))
             except IOError:
                 print('Failed to import {}'.format(file_name))
-        else:
+        elif verbatim:
             req_list.append((None, requirement))
     return req_list
 
@@ -68,16 +69,16 @@ def get_version_and_release_date(requirement, version=None, verbose=False):
         if version:
             if verbose:
                 print ('{} ({}) isn\'t available on PyPi anymore!'.format(
-                        requirement, version)
+                        requirement, version))
         else:
             if verbose:
                 print ('{} isn\'t even on PyPi. Check that the project still exists!'.format(
-                        requirement)
+                        requirement))
         return None, None
     #TODO: Catch something more specific
     except:
         if verbose:
-            print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version)
+            print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version))
         return None, None
 
     try:
@@ -91,11 +92,11 @@ def get_version_and_release_date(requirement, version=None, verbose=False):
         ))
     except IndexError:
         if verbose:
-            print ('{} ({}) didn\'t return a date property'.format(requirement, version)
+            print ('{} ({}) didn\'t return a date property'.format(requirement, version))
         return None, None
 
 
-def main(req_files=[]verbosity=0, latest=False, verbatim=False, print_only=True):
+def main(req_files=[], verbosity=0, latest=False, verbatim=False, print_only=True):
     """
         Process a list of requirements to determine how out of date they are.
     """
@@ -114,7 +115,7 @@ def main(req_files=[]verbosity=0, latest=False, verbatim=False, print_only=True)
         elif verbatim and not req:
             sys.stdout.write(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req verbose=(verbosity > 0))
+            latest_version, latest_release_date = get_version_and_release_date(req, verbose=(verbosity > 0))
             specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=(verbosity > 0))
 
             if latest_release_date and specified_release_date:

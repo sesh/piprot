@@ -1,0 +1,2 @@
+# Development Requirments
+ipython==1.1.0
