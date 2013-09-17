@@ -1,2 +1,10 @@
+# Requirements for Piprot
+# This actually doubles as a test file
+
 wsgiref==0.1.2
+
+# Requests deliberately out of date
+requests==1.2.0
 requests==1.2.3
+
+# notarequirement==0.1.1
