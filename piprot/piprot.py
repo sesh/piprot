@@ -16,7 +16,7 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.1.3"
+VERSION = "0.1.4"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 NOTIFY_URL = 'http://localhost:9000/'
 
@@ -66,8 +66,6 @@ def parse_req_file(req_file, colour=TextColours(False)):
         if requirement.strip().startswith('#'):
             continue
 
-        ## TODO replace with single verbose regex
-
         # if matching recursive requirement spec., call myself again
         recursive = re.match('\s*-r\s+(?P<filename>\S+)', requirement)
         if recursive:
@@ -102,10 +100,10 @@ def parse_req_file(req_file, colour=TextColours(False)):
     return req_dict
 
 
-def get_release_date(requirement, version=None, colour=TextColours(False)):
-    j = None
+def get_version_and_release_date(requirement, version=None, colour=TextColours(False)):
+    response = None
     try:
-        j = requests.request('GET', get_pypi_url(requirement, version)).json()
+        response = requests.get(get_pypi_url(requirement, version)).json()
     except requests.HTTPError:
         if version:
             print ('%s%s (%s) isn\'t available on PyPi anymore!%s' %
@@ -114,51 +112,31 @@ def get_release_date(requirement, version=None, colour=TextColours(False)):
             print ('%s%s isn\'t even on PyPi. Check that the project'
                 ' still exists!%s' %
                 (colour.FAIL, requirement, colour.ENDC))
-        return None
+        return None, None
     #TODO: Catch something more specific
     except:
         print ('%sDecoding the JSON response for %s (%s) failed%s' %
                 (colour.FAIL, requirement, version, colour.ENDC))
-        return None
+        return None, None
 
     try:
-        d = j['urls'][0]['upload_time']
-        return datetime.fromtimestamp(time.mktime(
-            time.strptime(d, '%Y-%m-%dT%H:%M:%S')
+        version = response['info']['stable_version']
+        release_date = response['urls'][0]['upload_time']
+        if not version:
+            version = response['info']['version']
+
+        return version, datetime.fromtimestamp(time.mktime(
+            time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
         ))
     except IndexError:
         print ('%s%s (%s) didn\'t return a date property%s' %
             (colour.FAIL, requirement, version, colour.ENDC))
-        return None
+        return None, None
 
 
-def notify_me(requirements, project_name="example"):
-    j = json.dumps(requirements)
-    print ('piprot notify will send you a weekly email with a summary of your '
-            'requirements and their status')
-
-    email = raw_input('What email address would you like notifications sent to? ')
-    if len(email) < 3 or "@" not in email:
-        print >> sys.stderr, "Not an email address"
-        sys.exit()
-
-    project = raw_input('What is the name of your project [%s]? ' % project_name)
-    if len(project) == 0:
-        project = project_name
-
-    payload = {}
-    payload['email'] = email
-    payload['project'] = project
-    payload['requirements'] = requirements
-
-    headers = {'content-type': 'application/json'}
-    r = requests.post(NOTIFY_URL, data=json.dumps(payload), headers=headers).json()
-    print(r['project'])
-    print(r['status'])
-
-
-def main(req_files=[], do_colour=False, verbosity=0, notify=False):
-    """Process a list of requirements to determine how out of date they are.
+def main(req_files=[], do_colour=False, verbosity=0, latest=False):
+    """
+        Process a list of requirements to determine how out of date they are.
     """
     colour = TextColours(do_colour)
     requirements = {}
@@ -166,21 +144,16 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
         requirements.update(parse_req_file(req_file, colour))
         req_file.close()
 
-    if notify:
-        notify_me(requirements)
-        sys.exit()
-
     # close all files.
     # remove duplicate requirements lines.
-    # divide requirements between a number of multiprocessing workers.
-
+    
     total_time_delta = 0
     for req, version in requirements.items():
-        latest_version = get_release_date(req, colour=colour)
-        specified_version = get_release_date(req, version, colour=colour)
+        latest_version, latest_release_date = get_version_and_release_date(req, colour=colour)
+        specified_version, specified_release_date = get_version_and_release_date(req, version, colour=colour)
 
-        if latest_version and specified_version:
-            time_delta = (latest_version - specified_version).days
+        if latest_release_date and specified_release_date:
+            time_delta = (latest_release_date - specified_release_date).days
             total_time_delta = total_time_delta + time_delta
 
             if verbosity:
@@ -191,6 +164,9 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
                     print('%s%s (%s) is up to date%s' %
                         (colour.OKGREEN, req, version, colour.ENDC))
 
+            if latest and latest_version != specified_version:
+                print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
+
     if total_time_delta > 0:
         print("%sYour requirements are %s days out of date%s" %
               (colour.FAIL, total_time_delta, colour.ENDC), file=sys.stderr)
@@ -200,17 +176,15 @@ def main(req_files=[], do_colour=False, verbosity=0, notify=False):
 
 
 def piprot():
-    print("piprot %s" % VERSION)
-
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
     )
     cli_parser.add_argument('-c', '--colour', '--color', action='store_true',
                             help='coloured output')
-    cli_parser.add_argument('--notify', action='store_true',
-                            help='subscribe to weekly updates about your requirements')
     cli_parser.add_argument('-v', '--verbose', action='count',
                             help='verbosity, can be supplied more than once')
+    cli_parser.add_argument('-l', '--latest', action='store_true',
+                            help='print the lastest available version for out of date requirements')
 
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
@@ -228,7 +202,7 @@ def piprot():
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, do_colour=cli_args.colour,
-         verbosity=cli_args.verbose, notify=cli_args.notify)
+         verbosity=cli_args.verbose, latest=cli_args.latest)
 
 if __name__ == '__main__':
     piprot()

@@ -15,6 +15,6 @@ setup(
         ]
     },
     install_requires=[
-        'requests>=1.1.0',
+        'requests',
     ]
 )
