@@ -18,8 +18,9 @@ import json
 
 VERSION = "0.2.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
-NOTIFY_URL = 'http://localhost:9000/'
 
+USE_PIPROT_IO = False
+PIPROT_IO_URL = 'http://localhost:8000/piprot/'
 
 def get_pypi_url(requirement, version=None):
     if version:
@@ -61,8 +62,22 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def get_version_and_release_date(requirement, version=None, verbose=False):
+def bulk_get_version_and_release_dates(requirements):
+    return requests.post(PIPROT_IO_URL, data=json.dumps({'requirements': requirements})).json()
+
+
+def get_version_and_release_date(requirement, version=None, verbose=False, release_data=None):
     response = None
+    if release_data:
+        if requirement in release_data.keys():
+            if version:
+                return release_data[requirement]['release'], datetime.fromtimestamp(time.mktime(
+                                time.strptime(release_data[requirement]['released_at'], '%Y-%m-%dT%H:%M:%S')
+                            ))
+            else:
+                return release_data[requirement]['latest'], datetime.fromtimestamp(time.mktime(
+                                time.strptime(release_data[requirement]['latest_released_at'], '%Y-%m-%dT%H:%M:%S')
+                            ))
     try:
         response = requests.get(get_pypi_url(requirement, version)).json()
     except requests.HTTPError:
@@ -75,7 +90,6 @@ def get_version_and_release_date(requirement, version=None, verbose=False):
                 print ('{} isn\'t even on PyPi. Check that the project still exists!'.format(
                         requirement))
         return None, None
-    #TODO: Catch something more specific
     except:
         if verbose:
             print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version))
@@ -106,6 +120,16 @@ def main(req_files=[], verbose=False, latest=False, verbatim=False, print_only=F
         req_file.close()
 
     total_time_delta = 0
+
+    if USE_PIPROT_IO:
+        only_requirements = {}
+        for req, version in requirements:
+            if req:
+                only_requirements[req] = version
+        release_data = bulk_get_version_and_release_dates(only_requirements)
+    else:
+        release_data = None
+
     for req, version in requirements:
         if print_only:
             if req:
@@ -115,8 +139,8 @@ def main(req_files=[], verbose=False, latest=False, verbatim=False, print_only=F
         elif verbatim and not req:
             sys.stdout.write(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose)
-            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=verbose)
+            latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose, release_data=release_data)
+            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=verbose, release_data=release_data)
 
             if latest_release_date and specified_release_date:
                 time_delta = (latest_release_date - specified_release_date).days
