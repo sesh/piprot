@@ -16,7 +16,7 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.3.0a"
+VERSION = "0.3.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_PIPROT_IO = False
@@ -45,7 +45,7 @@ def parse_req_file(req_file, verbatim=False):
         req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
                              requirement_no_comments)
         if req_match:
-            req_list.append((req_match.group('package'), 
+            req_list.append((req_match.group('package'),
                              req_match.group('version')))
         elif requirement_no_comments.startswith('-r'):
             base_dir = os.path.dirname(os.path.abspath(req_file.name))
