@@ -13,7 +13,7 @@ env:
 # command to install dependencies
 install:
   - pip install -q six==1.5.2
-  - pip install -q requests==REQUESTS_VERSION
+  - pip install -q requests==$REQUESTS_VERSION
 
 # command to run tests
 script:
