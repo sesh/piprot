@@ -9,26 +9,24 @@ How rotten are your requirements?
 
 ### Installation
 
-piprot can now be installed
+piprot can be installed via PyPI
 
-    python setup.py install
+    pip install piprot
 
 
 ### Basic Usage
 
-Just a heads up that this readme doesn't even scratch the surface of what's possible with this initial version of piprot.
-
-piprot will always use the first requirements file you include on the comand line
+Run piprot and provide a requirements file
 
     piprot requirements.txt
-
-The --verbose arguement will make things a little more verbose
-
-    piprot --verbose requirements.txt
 
 The --verbatim arguement will output your complete requirements file, with some comments about the out of date nature of your packages
 
     piprot --verbatim
+
+The --verbose arguement will make things a little more verbose
+
+    piprot --verbose requirements.txt
 
 The --latest argument will output just the package and version number
 
@@ -48,3 +46,4 @@ Yep, you can use stdin as well
 To run the test suite, execute `python -m unittest discover`, within the project directory.
 
 Please ensure that the (limited) tests are all passing before making a pull request. Feel free to add more.
+
