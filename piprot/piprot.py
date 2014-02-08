@@ -176,11 +176,13 @@ def piprot():
         epilog="Here's hoping your requirements are nice and fresh!"
     )
     cli_parser.add_argument('-v', '--verbose', action='store_true',
-                            help='verbosity, can be supplied more than once')
+                            help='verbosity, can be supplied more than once (enabled by default, use --quiet to disable)')
     cli_parser.add_argument('-l', '--latest', action='store_true',
                             help='print the lastest available version for out of date requirements')
     cli_parser.add_argument('-x', '--verbatim', action='store_true',
                             help='output the full requirements file, with added comments with potential updates')
+    cli_parser.add_argument('-q', '--quiet', action='store_true',
+                            help='be a little less verbose with the output (<0.3 behaviour)')
 
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
@@ -199,7 +201,7 @@ def piprot():
         sys.exit('--verbatim only allowed for single requirements files')
 
     # call the main function to kick off the real work
-    main(req_files=cli_args.file, verbose=cli_args.verbose,
+    main(req_files=cli_args.file, verbose=(True and not cli_args.quiet),
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False)
 
 if __name__ == '__main__':
