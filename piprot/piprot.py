@@ -16,7 +16,7 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_PIPROT_IO = False
