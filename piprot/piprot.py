@@ -90,7 +90,7 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
                 print ('{} isn\'t even on PyPi. Check that the project still exists!'.format(
                         requirement))
         return None, None
-    except:
+    except ValueError:
         if verbose:
             print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version))
         return None, None
