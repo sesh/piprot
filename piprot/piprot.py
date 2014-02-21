@@ -110,7 +110,7 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
         return None, None
 
 
-def main(req_files=[], verbose=False, latest=False, verbatim=False, print_only=False):
+def main(req_files=[], verbose=False, outdated=False, latest=False, verbatim=False, print_only=False):
     """
         Process a list of requirements to determine how out of date they are.
     """
@@ -148,8 +148,8 @@ def main(req_files=[], verbose=False, latest=False, verbatim=False, print_only=F
 
                 if verbose:
                     if time_delta > 0:
-                        print('{} ({}) is {} days out of date'.format(req, version, time_delta))
-                    else:
+                        print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
+                    elif not outdated:
                         print('{} ({}) is up to date'.format(req, version))
 
                 if latest and latest_version != specified_version:
@@ -183,7 +183,8 @@ def piprot():
                             help='output the full requirements file, with added comments with potential updates')
     cli_parser.add_argument('-q', '--quiet', action='store_true',
                             help='be a little less verbose with the output (<0.3 behaviour)')
-
+    cli_parser.add_argument('-o', '--outdated', action='store_true',
+                            help='only list outdated requirements')
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
     nargs = '+'
@@ -207,7 +208,7 @@ def piprot():
     elif cli_args.verbatim:
         verbose = False
 
-    main(req_files=cli_args.file, verbose=verbose,
+    main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False)
 
 if __name__ == '__main__':
