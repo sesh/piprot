@@ -5,7 +5,6 @@ How rotten are your requirements?
 
 ![piprot Demo](http://i.imgur.com/kewPaFa.gif)
 
-![Passing?](https://api.travis-ci.org/sesh/piprot.png)
 
 ### Installation
 
@@ -16,29 +15,22 @@ piprot can be installed via PyPI
 
 ### Basic Usage
 
-Run piprot and provide a requirements file
+Run piprot and provide a requirements file (if it's not called requirements.txt)
 
-    piprot requirements.txt
+    piprot base_requirements.txt
 
-The --verbatim arguement will output your complete requirements file, with some comments about the out of date nature of your packages
+
+The --verbatim arguement will output your complete requirements file, with some comments about the out of date nature of your packages.
 
     piprot --verbatim
 
-The --verbose arguement will make things a little more verbose
+Using --outdated will show only the out of date requirements, pretty much the same as running `pip list -o`, except on a requirements file.
 
-    piprot --verbose requirements.txt
-
-The --latest argument will output just the package and version number
-
-    piprot --latest
-
-Use the --verbatim and --latest options together to get your complete requirements file, with fully updated requirements
-
-    piprot --verbatim --latest
+    piprot --outdated
 
 Yep, you can use stdin as well
 
-    pip freeze | piprot -
+    pip freeze | piprot
 
 
 ### Tests
