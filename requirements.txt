@@ -1,8 +1,10 @@
 # Requirements for Piprot
 # This actually doubles as a test file
 
-requests==2.2.1
+requests==2.2.0
 six==1.5.2
 
 piprot==0.4.0
 # notarequirement==0.1.1
+
+doge==3.4.0

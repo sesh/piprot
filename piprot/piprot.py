@@ -201,7 +201,13 @@ def piprot():
         sys.exit('--verbatim only allowed for single requirements files')
 
     # call the main function to kick off the real work
-    main(req_files=cli_args.file, verbose=(True and not cli_args.quiet),
+    verbose = True
+    if cli_args.quiet:
+        verbose = False
+    elif cli_args.verbatim:
+        verbose = False
+
+    main(req_files=cli_args.file, verbose=verbose,
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False)
 
 if __name__ == '__main__':
