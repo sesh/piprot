@@ -79,7 +79,18 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
                                 time.strptime(release_data[requirement]['latest_released_at'], '%Y-%m-%dT%H:%M:%S')
                             ))
     try:
-        response = requests.get(get_pypi_url(requirement, version)).json()
+        url = get_pypi_url(requirement, version)
+        response = requests.get(url)
+
+        # see if the url is 404'ing because it has been redirected
+        if response.status_code == 404:
+            root_url = url.rpartition('/')[0]
+            res = requests.head(root_url)
+            if res.status_code == 301:
+                new_location = res.headers['location'] + '/json'
+                response = requests.get(new_location)
+
+        response = response.json()
     except requests.HTTPError:
         if version:
             if verbose:
