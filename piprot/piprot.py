@@ -16,11 +16,15 @@ except ImportError:
         from io import StringIO
 import json
 
+from requests_futures.sessions import FuturesSession
+
 VERSION = "0.5.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_PIPROT_IO = False
 PIPROT_IO_URL = 'http://localhost:8000/piprot/'
+
+session = FuturesSession()
 
 def get_pypi_url(requirement, version=None):
     if version:
@@ -66,8 +70,7 @@ def bulk_get_version_and_release_dates(requirements):
     return requests.post(PIPROT_IO_URL, data=json.dumps({'requirements': requirements})).json()
 
 
-def get_version_and_release_date(requirement, version=None, verbose=False, release_data=None):
-    response = None
+def get_version_and_release_date(response, requirement, version, verbose, release_data):
     if release_data:
         if requirement in release_data.keys():
             if version:
@@ -79,7 +82,7 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
                                 time.strptime(release_data[requirement]['latest_released_at'], '%Y-%m-%dT%H:%M:%S')
                             ))
     try:
-        response = requests.get(get_pypi_url(requirement, version)).json()
+        response = response.result().json()
     except requests.HTTPError:
         if version:
             if verbose:
@@ -130,6 +133,8 @@ def main(req_files=[], verbose=False, outdated=False, latest=False, verbatim=Fal
     else:
         release_data = None
 
+    results = []
+
     for req, version in requirements:
         if print_only:
             if req:
@@ -139,27 +144,37 @@ def main(req_files=[], verbose=False, outdated=False, latest=False, verbatim=Fal
         elif verbatim and not req:
             sys.stdout.write(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose, release_data=release_data)
-            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=verbose, release_data=release_data)
+            results.append((
+                req,
+                version,
+                session.get(get_pypi_url(req)),
+                session.get(get_pypi_url(req, version))
+            ))
 
-            if latest_release_date and specified_release_date:
-                time_delta = (latest_release_date - specified_release_date).days
-                total_time_delta = total_time_delta + time_delta
+    for result in results:
+        req, version = result[:2]
 
-                if verbose:
-                    if time_delta > 0:
-                        print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
-                    elif not outdated:
-                        print('{} ({}) is up to date'.format(req, version))
+        ((latest_version, latest_release_date), (specified_version, specified_release_date)) =\
+            [get_version_and_release_date(x, req, version, verbose, release_data) for x in result[2:]]
 
-                if latest and latest_version != specified_version:
-                    print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
-                elif verbatim and latest_version != specified_version:
-                    print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
-                elif verbatim:
-                    print('{}=={}'.format(req, specified_version))
+        if latest_release_date and specified_release_date:
+            time_delta = (latest_release_date - specified_release_date).days
+            total_time_delta = total_time_delta + time_delta
+
+            if verbose:
+                if time_delta > 0:
+                    print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
+                elif not outdated:
+                    print('{} ({}) is up to date'.format(req, version))
+
+            if latest and latest_version != specified_version:
+                print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
+            elif verbatim and latest_version != specified_version:
+                print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
             elif verbatim:
-                print('{}=={} # Error checking latest version'.format(req, version))
+                print('{}=={}'.format(req, specified_version))
+        elif verbatim:
+            print('{}=={} # Error checking latest version'.format(req, version))
 
     if verbatim:
         verbatim = "# Generated with piprot {}\n# ".format(VERSION)

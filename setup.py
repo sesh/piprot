@@ -16,6 +16,7 @@ setup(
     },
     install_requires=[
         'requests',
-        'six'
+        'six',
+        'requests-futures'
     ]
 )
