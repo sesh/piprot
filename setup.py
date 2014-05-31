@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='piprot',
-    version='0.5.0',
+    version='0.6.0',
     author='Brenton Cleeland, Mark Hellewell, Dan Peade',
     author_email='brenton@brntn.me',
     packages=['piprot',],
