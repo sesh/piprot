@@ -22,6 +22,9 @@ PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 USE_PIPROT_IO = False
 PIPROT_IO_URL = 'http://localhost:8000/piprot/'
 
+USE_NOTIFY = True
+NOTIFY_URL = 'http://localhost:8000/notify/'
+
 def get_pypi_url(requirement, version=None):
     if version:
         return '{base}/{req}/{version}/json'.format(base=PYPI_BASE_URL,
@@ -62,8 +65,13 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def bulk_get_version_and_release_dates(requirements):
-    return requests.post(PIPROT_IO_URL, data=json.dumps({'requirements': requirements})).json()
+def notify_requirements(email_address, requirements):
+    return requests.post(NOTIFY_URL, data=json.dumps({
+                                        'requirements': requirements,
+                                        'email': email_address}),
+                                     headers={
+                                        'Content-type': 'application/json'
+                                     }).json()
 
 
 def get_version_and_release_date(requirement, version=None, verbose=False, release_data=None):
@@ -121,10 +129,8 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
         return None, None
 
 
-def main(req_files=[], verbose=False, outdated=False, latest=False, verbatim=False, print_only=False):
-    """
-        Process a list of requirements to determine how out of date they are.
-    """
+def main(req_files=[], verbose=False, outdated=False, latest=False,
+         verbatim=False, print_only=False, notify=''):
     requirements = []
     for req_file in req_files:
         requirements.extend(parse_req_file(req_file, verbatim=verbatim))
@@ -132,14 +138,23 @@ def main(req_files=[], verbose=False, outdated=False, latest=False, verbatim=Fal
 
     total_time_delta = 0
 
-    if USE_PIPROT_IO:
+    release_data = None
+    if notify and USE_NOTIFY:
+        # Do notify and exit asap
         only_requirements = {}
         for req, version in requirements:
             if req:
                 only_requirements[req] = version
-        release_data = bulk_get_version_and_release_dates(only_requirements)
-    else:
-        release_data = None
+        response = notify_requirements(notify, only_requirements)
+
+        if response['status'] == 'OK':
+            print('Your requirements have been uploaded to piprot.io and you ' \
+                  'will be notified when new version are released.')
+            return
+        else:
+            print('Something went wrong while uploading to piprot.io, please ' \
+                  'file a bug report if this continues')
+            return
 
     for req, version in requirements:
         if print_only:
@@ -196,6 +211,10 @@ def piprot():
                             help='be a little less verbose with the output (<0.3 behaviour)')
     cli_parser.add_argument('-o', '--outdated', action='store_true',
                             help='only list outdated requirements')
+
+    cli_parser.add_argument('-n', '--notify',
+                            help='submit requirements to piprot notify for weekly')
+
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
     nargs = '+'
@@ -220,7 +239,8 @@ def piprot():
         verbose = False
 
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
-         latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False)
+         latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False,
+         notify=cli_args.notify)
 
 if __name__ == '__main__':
     piprot()
