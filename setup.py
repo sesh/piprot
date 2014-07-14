@@ -1,5 +1,6 @@
 from setuptools import setup
 
+
 setup(
     name='piprot',
     version='0.6.0',
