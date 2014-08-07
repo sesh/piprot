@@ -2,9 +2,9 @@
 # This actually doubles as a test file
 
 requests==2.3.0
-six==1.6.1
+six==1.7.3
 
 piprot==0.6.0
 # notarequirement==0.1.1
 
-doge==3.4.0
+doge==3.5.0

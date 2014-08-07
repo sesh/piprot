@@ -16,14 +16,11 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.6.0"
+VERSION = "0.7.0b"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
-USE_PIPROT_IO = False
-PIPROT_IO_URL = 'http://localhost:8000/piprot/'
-
 USE_NOTIFY = True
-NOTIFY_URL = 'http://localhost:8000/notify/'
+NOTIFY_URL = 'http://128.199.130.250/notify/'
 
 def get_pypi_url(requirement, version=None):
     if version:
@@ -65,10 +62,11 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def notify_requirements(email_address, requirements):
+def notify_requirements(email_address, requirements, reset):
     return requests.post(NOTIFY_URL, data=json.dumps({
                                         'requirements': requirements,
-                                        'email': email_address}),
+                                        'email': email_address,
+                                        'reset': reset}),
                                      headers={
                                         'Content-type': 'application/json'
                                      }).json()
@@ -130,7 +128,7 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
 
 
 def main(req_files=[], verbose=False, outdated=False, latest=False,
-         verbatim=False, print_only=False, notify=''):
+         verbatim=False, print_only=False, notify='', reset=False):
     requirements = []
     for req_file in req_files:
         requirements.extend(parse_req_file(req_file, verbatim=verbatim))
@@ -145,11 +143,13 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
         for req, version in requirements:
             if req:
                 only_requirements[req] = version
-        response = notify_requirements(notify, only_requirements)
+        response = notify_requirements(notify, only_requirements, reset)
 
         if response['status'] == 'OK':
-            print('Your requirements have been uploaded to piprot.io and you ' \
-                  'will be notified when new version are released.')
+            print('Your requirements have been uploaded to piprot.io and {} ' \
+                  'will be notified when new version are released. You are ' \
+                  'tracking {} packages.'.format(response['email'],
+                                                 response['package_count']))
             return
         else:
             print('Something went wrong while uploading to piprot.io, please ' \
@@ -214,6 +214,8 @@ def piprot():
 
     cli_parser.add_argument('-n', '--notify',
                             help='submit requirements to piprot notify for weekly')
+    cli_parser.add_argument('-r', '--reset', action='store_true',
+                            help='reset your piprot notify subscriptions, will clear all package subscriptions before adding these requirements')
 
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
@@ -240,7 +242,7 @@ def piprot():
 
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False,
-         notify=cli_args.notify)
+         notify=cli_args.notify, reset=cli_args.reset)
 
 if __name__ == '__main__':
     piprot()
