@@ -20,7 +20,7 @@ VERSION = "0.7.0b"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_NOTIFY = True
-NOTIFY_URL = 'http://128.199.130.250/notify/'
+NOTIFY_URL = 'https://piprot.io/notify/'
 
 def get_pypi_url(requirement, version=None):
     if version:
