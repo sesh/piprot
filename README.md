@@ -39,7 +39,7 @@ The --verbatim argument will output your complete requirements file, with some c
     # notarequirement==0.1.1
 
     doge==3.4.0 # Latest 3.5.0
-    # Generated with piprot 0.6.0
+    # Generated with piprot 0.7.0
     # Your requirements are 236 days out of date
 
 Using --outdated will show only the out of date requirements, pretty much the same as running `pip list -o`, except on a requirements file.
