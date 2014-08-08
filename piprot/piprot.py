@@ -16,11 +16,12 @@ except ImportError:
         from io import StringIO
 import json
 
-VERSION = "0.7.0b"
+VERSION = "0.7.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_NOTIFY = True
 NOTIFY_URL = 'https://piprot.io/notify/'
+
 
 def get_pypi_url(requirement, version=None):
     if version:
@@ -243,6 +244,7 @@ def piprot():
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False,
          notify=cli_args.notify, reset=cli_args.reset)
+
 
 if __name__ == '__main__':
     piprot()
