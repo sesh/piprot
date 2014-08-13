@@ -9,6 +9,8 @@ env:
   - REQUESTS_VERSION=2.0.1
   - REQUESTS_VERSION=2.1.0
   - REQUESTS_VERSION=2.2.1
+  - REQUESTS_VERSION=2.3.0
+  
 
 # command to install dependencies
 install:
