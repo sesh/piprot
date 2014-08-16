@@ -1,5 +1,9 @@
 from setuptools import setup
 
+"""
+Use pandoc to convert README.md to README.rst before uploading
+   pandoc README.md -o README.rst
+"""
 
 setup(
     name='piprot',
@@ -10,7 +14,7 @@ setup(
     url='http://github.com/sesh/piprot',
     license='LICENSE.txt',
     description='How rotten are your requirements?',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     entry_points={
         'console_scripts': [
             'piprot = piprot.piprot:piprot',
