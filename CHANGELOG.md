@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.2 - 2014-08-16
+
+### Added
+- Nothing
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Use rst for PyPI long description field
+
+
 ## 0.7.1 - 2014-08-16
 
 ### Added
