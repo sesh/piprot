@@ -72,6 +72,18 @@ something similar that's designed for use against the packages that you actually
 have installed.
 
 
+### Notifications
+
+Since version 0.7.0 piprot has had support for uploading your requirements to
+[piprot.io](https://piprot.io) to receive weekly notifications about packages
+that have been updated. You can upload your requirements using a command like this:
+
+    piprot --notify=brenton@piprot.io requirements.txt
+
+This service was created by @sesh (the creator of this tool, me!) and will at some
+point in the future require a small fee for ongoing notifications.
+
+
 ### Tests
 
 To run the test suite, execute `python -m unittest discover`, within the project directory.
