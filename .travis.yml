@@ -10,12 +10,13 @@ env:
   - REQUESTS_VERSION=2.1.0
   - REQUESTS_VERSION=2.2.1
   - REQUESTS_VERSION=2.3.0
-  
+
 
 # command to install dependencies
 install:
   - pip install -q six==1.5.2
   - pip install -q requests==$REQUESTS_VERSION
+  - pip install -q requests-futures==0.9.4
 
 # command to run tests
 script:
