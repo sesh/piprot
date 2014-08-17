@@ -1,26 +1,22 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import argparse
 from datetime import datetime
+import json
 import os
 import re
 import requests
 import sys
 import time
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    try:
-        import StringIO
-    except ImportError:
-        from io import StringIO
-
 from six.moves import input
+from six.moves import cStringIO as StringIO
 
-import json
+from requests_futures.sessions import FuturesSession
 
-VERSION = "0.7."
+
+VERSION = "0.8.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_NOTIFY = True
@@ -38,14 +34,12 @@ def get_pypi_url(requirement, version=None):
 def parse_req_file(req_file, verbatim=False):
     """Take a file and return a dict of (requirement, versions) based
     on the files requirements specs.
-
-    TODO support pip's --index-url and --find-links requirements lines.
-    TODO support Git, Subversion, Bazaar, Mercurial requirements lines.
     """
     req_list = []
     requirements = req_file.readlines()
     for requirement in requirements:
         requirement_no_comments = requirement.split('#')[0].strip()
+
         # if matching requirement line (Thing==1.2.3), update dict, continue
         req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
                              requirement_no_comments)
@@ -67,31 +61,11 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def notify_requirements(email_address, requirements, reset):
-    return requests.post(NOTIFY_URL, data=json.dumps({
-                                        'requirements': requirements,
-                                        'email': email_address,
-                                        'reset': reset}),
-                                     headers={
-                                        'Content-type': 'application/json'
-                                     }).json()
-
-
-def get_version_and_release_date(requirement, version=None, verbose=False, release_data=None):
-    response = None
-    if release_data:
-        if requirement in release_data.keys():
-            if version:
-                return release_data[requirement]['release'], datetime.fromtimestamp(time.mktime(
-                                time.strptime(release_data[requirement]['released_at'], '%Y-%m-%dT%H:%M:%S')
-                            ))
-            else:
-                return release_data[requirement]['latest'], datetime.fromtimestamp(time.mktime(
-                                time.strptime(release_data[requirement]['latest_released_at'], '%Y-%m-%dT%H:%M:%S')
-                            ))
+def get_version_and_release_date(requirement, version=None, verbose=False, response=None):
     try:
-        url = get_pypi_url(requirement, version)
-        response = requests.get(url)
+        if not response:
+            url = get_pypi_url(requirement, version)
+            response = requests.get(url)
 
         # see if the url is 404'ing because it has been redirected
         if response.status_code == 404:
@@ -105,11 +79,11 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
     except requests.HTTPError:
         if version:
             if verbose:
-                print ('{} ({}) isn\'t available on PyPi anymore!'.format(
+                print ('{} ({}) isn\'t available on PyPI anymore!'.format(
                         requirement, version))
         else:
             if verbose:
-                print ('{} isn\'t even on PyPi. Check that the project still exists!'.format(
+                print ('{} isn\'t even on PyPI. Check that the project still exists!'.format(
                         requirement))
         return None, None
     except ValueError:
@@ -133,7 +107,7 @@ def get_version_and_release_date(requirement, version=None, verbose=False, relea
 
 
 def main(req_files=[], verbose=False, outdated=False, latest=False,
-         verbatim=False, print_only=False, notify='', reset=False):
+         verbatim=False, notify='', reset=False):
     requirements = []
     for req_file in req_files:
         requirements.extend(parse_req_file(req_file, verbatim=verbatim))
@@ -141,13 +115,13 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
 
     total_time_delta = 0
 
-    release_data = None
     if notify and USE_NOTIFY:
         # Do notify and exit asap
         only_requirements = {}
         for req, version in requirements:
             if req:
                 only_requirements[req] = version
+
         response = notify_requirements(notify, only_requirements, reset)
 
         if response['status'] == 'OK':
@@ -161,41 +135,55 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
                   'file a bug report if this continues')
             return
 
+    session = FuturesSession()
+    results = []
+
     for req, version in requirements:
-        if print_only:
-            if req:
-                print("{}=={}".format(req, version))
-            else:
-                print(version)
-        elif verbatim and not req:
-            sys.stdout.write(version)
+        if verbatim and not req:
+            results.append(version)
         elif req:
-            latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose, release_data=release_data)
-            specified_version, specified_release_date = get_version_and_release_date(req, version, verbose=verbose, release_data=release_data)
+            results.append({
+                'req': req,
+                'version': version,
+                'latest': session.get(get_pypi_url(req)),
+                'specified': session.get(get_pypi_url(req, version))
+            })
 
-            if latest_release_date and specified_release_date:
-                time_delta = (latest_release_date - specified_release_date).days
-                total_time_delta = total_time_delta + time_delta
+    for result in results:
+        if isinstance(result, str):
+            print(result.replace('\n', ''))
+            continue
 
-                if verbose:
-                    if time_delta > 0:
-                        print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
-                    elif not outdated:
-                        print('{} ({}) is up to date'.format(req, version))
+        req = result['req']
+        version = result['version']
 
-                if latest and latest_version != specified_version:
-                    print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
-                elif verbatim and latest_version != specified_version:
-                    print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
-                elif verbatim:
-                    print('{}=={}'.format(req, specified_version))
+        latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose, response=result['latest'].result())
+        specified_version, specified_release_date = get_version_and_release_date(req, version, response=result['specified'].result())
+
+        if latest_release_date and specified_release_date:
+            time_delta = (latest_release_date - specified_release_date).days
+            total_time_delta = total_time_delta + time_delta
+
+            if verbose:
+                if time_delta > 0:
+                    print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
+                elif not outdated:
+                    print('{} ({}) is up to date'.format(req, version))
+
+            if latest and latest_version != specified_version:
+                print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
+            elif verbatim and latest_version != specified_version:
+                print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
             elif verbatim:
-                print('{}=={} # Error checking latest version'.format(req, version))
+                print('{}=={}'.format(req, specified_version))
+        elif verbatim:
+            print('{}=={} # Error checking latest version'.format(req, version))
 
     if verbatim:
         verbatim = "# Generated with piprot {}\n# ".format(VERSION)
     else:
         verbatim = ""
+
     if total_time_delta > 0:
         print("{}Your requirements are {} days out of date".format(verbatim, total_time_delta))
     else:
@@ -218,6 +206,16 @@ def output_post_commit():
 #
 
 piprot --notify={email} {path}""".format(email=email, path=path))
+
+
+def notify_requirements(email_address, requirements, reset):
+    return requests.post(NOTIFY_URL, data=json.dumps({
+                                        'requirements': requirements,
+                                        'email': email_address,
+                                        'reset': reset}),
+                                     headers={
+                                        'Content-type': 'application/json'
+                                     }).json()
 
 
 def piprot():
@@ -267,12 +265,12 @@ def piprot():
 
     if cli_args.notify_post_commit:
         output_post_commit()
-        sys.exit(1)
+        return
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
-         latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False,
-         notify=cli_args.notify, reset=cli_args.reset)
+         latest=cli_args.latest, verbatim=cli_args.verbatim, notify=cli_args.notify,
+         reset=cli_args.reset)
 
 
 if __name__ == '__main__':

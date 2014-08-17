@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8 - ???
+
+### Added
+
+- requests-futures support, making everything a whole heap faster
+- Added documentation for the --latest feature that's been there from the beginning
+- Added --notify-post-commit argument to output a post-commit hook to automatically notify
+
 ## 0.7.2 - 2014-08-16
 
 ### Added

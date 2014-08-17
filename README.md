@@ -18,7 +18,8 @@ piprot can be installed via PyPI
 
 ### Basic Usage
 
-Run piprot and provide a requirements file (if it's not called requirements.txt):
+Run piprot and provide a requirements file (if it's not called requirements.txt)
+and it will tell you the current status of your packages.
 
     > piprot base_requirements.txt
     requests (2.3.0) is up to date
@@ -28,8 +29,9 @@ Run piprot and provide a requirements file (if it's not called requirements.txt)
     Your requirements are 236 days out of date
 
 If your requirements file is named "requirements.txt", you don't need to provide it.
+piprot will automatically traverse included requirements files.
 
-The --verbatim argument will output your complete requirements file, with some
+The `--verbatim` argument will output your complete requirements file, with some
 comments about the out of date nature of your packages.
 
     > piprot --verbatim
@@ -46,7 +48,7 @@ comments about the out of date nature of your packages.
     # Generated with piprot 0.7.0
     # Your requirements are 236 days out of date
 
-Using --outdated will show only the out of date requirements, pretty much the same
+Using `--outdated` will show only the out of date requirements, pretty much the same
 as running `pip list -o`, except on a requirements file.
 
     > piprot --outdated
@@ -54,14 +56,34 @@ as running `pip list -o`, except on a requirements file.
     doge (3.4.0) is 129 days out of date. Latest is 3.5.0
     Your requirements are 236 days out of date
 
+The `--latest` argument will output the requirements lines with the current version
+replaced with the latest version.
+
+    > piprot --latest
+    ipython (1.1.0) is 331 days out of date. Latest is 2.2.0
+    ipython==2.2.0 # Updated from 1.1.0
+    Django (1.5.4) is 241 days out of date. Latest is 1.6.5
+    Django==1.6.5 # Updated from 1.5.4
+    requests (1.2.3) is 356 days out of date. Latest is 2.3.0
+    requests==2.3.0 # Updated from 1.2.3
+    Your requirements are 928 days out of date
+
+Personally, I like to use `--latest` and `--verbatim` together, creating a sort-of
+''perfect'' requirements file for me,
+
+    > piprot --latest --verbatim
+    # Development Requirements
+    ipython==2.2.0 # Updated from 1.1.0
+
+    Django==1.6.5 # Updated from 1.5.4
+    requests==2.3.0 # Updated from 1.2.3
+    # Generated with piprot 0.8.0
+    # Your requirements are 928 days out of date
+
 Yep, you can use stdin as well if you really want to, but there are better tools
 for working with packages installed in your environment.
 
     pip freeze | piprot
-
-And what I like to do is use --verbatim and push it back out into another file.
-
-    piprot --verbatim > reqs.txt
 
 
 ### Working with your environment
