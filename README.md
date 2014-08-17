@@ -84,6 +84,17 @@ This service was created by @sesh (the creator of this tool, me!) and will at so
 point in the future require a small fee for ongoing notifications.
 
 
+#### Installing post-commit hook
+
+You can install a simple post-commit hook to automatically upload your requirements
+every time you commit to your repository. Run the following command and add the output
+to `.git/hook/post-commit`:
+
+    piprot --notify-post-commit
+
+You will be asked a few questions to help set up the hook before the output.
+
+
 ### Tests
 
 To run the test suite, execute `python -m unittest discover`, within the project directory.
