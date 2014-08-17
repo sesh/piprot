@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+piprot - How rotten are your requirements?
+"""
 from __future__ import print_function
 
 import argparse
@@ -11,7 +14,6 @@ import sys
 import time
 
 from six.moves import input
-from six.moves import cStringIO as StringIO
 
 from requests_futures.sessions import FuturesSession
 
@@ -23,12 +25,17 @@ USE_NOTIFY = True
 NOTIFY_URL = 'https://piprot.io/notify/'
 
 
-def get_pypi_url(requirement, version=None):
+def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
+    """
+    Get the PyPI url for a given requirement and optional version number and
+    PyPI base URL. The default base url is 'https://pypi.python.org/pypi'
+    """
     if version:
-        return '{base}/{req}/{version}/json'.format(base=PYPI_BASE_URL,
-            req=requirement, version=version)
+        return '{base}/{req}/{version}/json'.format(base=base_url,
+                                                    req=requirement,
+                                                    version=version)
     else:
-        return '{base}/{req}/json'.format(base=PYPI_BASE_URL, req=requirement)
+        return '{base}/{req}/json'.format(base=base_url, req=requirement)
 
 
 def parse_req_file(req_file, verbatim=False):
@@ -41,7 +48,7 @@ def parse_req_file(req_file, verbatim=False):
         requirement_no_comments = requirement.split('#')[0].strip()
 
         # if matching requirement line (Thing==1.2.3), update dict, continue
-        req_match = re.match('\s*(?P<package>\S+)==(?P<version>\S+)',
+        req_match = re.match(r'\s*(?P<package>\S+)==(?P<version>\S+)',
                              requirement_no_comments)
         if req_match:
             req_list.append((req_match.group('package'),
@@ -53,7 +60,8 @@ def parse_req_file(req_file, verbatim=False):
             try:
                 if verbatim:
                     req_list.append((None, requirement))
-                req_list.extend(parse_req_file(open(new_path), verbatim=verbatim))
+                req_list.extend(parse_req_file(open(new_path),
+                                               verbatim=verbatim))
             except IOError:
                 print('Failed to import {}'.format(file_name))
         elif verbatim:
@@ -61,7 +69,13 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def get_version_and_release_date(requirement, version=None, verbose=False, response=None):
+def get_version_and_release_date(requirement, version=None,
+                                 verbose=False, response=None):
+    """Given a requirement and optional version returns a (version, releasedate)
+    tuple. Defaults to the latest version. Prints to stdout if verbose is True.
+    Optional response argument is the response from PyPI to be used for
+    asyncronous lookups.
+    """
     try:
         if not response:
             url = get_pypi_url(requirement, version)
@@ -79,16 +93,17 @@ def get_version_and_release_date(requirement, version=None, verbose=False, respo
     except requests.HTTPError:
         if version:
             if verbose:
-                print ('{} ({}) isn\'t available on PyPI anymore!'.format(
-                        requirement, version))
+                print ('{} ({}) isn\'t available on PyPI '
+                       'anymore!'.format(requirement, version))
         else:
             if verbose:
-                print ('{} isn\'t even on PyPI. Check that the project still exists!'.format(
-                        requirement))
+                print ('{} isn\'t even on PyPI. Check that the project '
+                       'still exists!'.format(requirement))
         return None, None
     except ValueError:
         if verbose:
-            print ('Decoding the JSON response for {} ({}) failed'.format(requirement, version))
+            print ('Decoding the JSON response for {} ({}) '
+                   'failed'.format(requirement, version))
         return None, None
 
     try:
@@ -102,12 +117,27 @@ def get_version_and_release_date(requirement, version=None, verbose=False, respo
         ))
     except IndexError:
         if verbose:
-            print ('{} ({}) didn\'t return a date property'.format(requirement, version))
+            print ('{} ({}) didn\'t return a date property'.format(requirement,
+                                                                   version))
         return None, None
 
 
-def main(req_files=[], verbose=False, outdated=False, latest=False,
+def main(req_files, verbose=False, outdated=False, latest=False,
          verbatim=False, notify='', reset=False):
+    """Given a list of requirements files reports which requirements are out
+    of date.
+
+    Everything is rather somewhat obvious:
+    - verbose makes things a little louder
+    - outdated forces piprot to only report out of date packages
+    - latest outputs the requirements line with the latest version
+    - verbatim outputs the requirements file as-is - with comments showing the
+      latest versions (can be used with latest to output the latest with the old
+      version in the comment)
+    - notify is a string that should be an email address to upload to piprot.io
+    - reset goes with the notification to decide whether to reset the packages
+      subscribed to.
+    """
     requirements = []
     for req_file in req_files:
         requirements.extend(parse_req_file(req_file, verbatim=verbatim))
@@ -157,8 +187,14 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
         req = result['req']
         version = result['version']
 
-        latest_version, latest_release_date = get_version_and_release_date(req, verbose=verbose, response=result['latest'].result())
-        specified_version, specified_release_date = get_version_and_release_date(req, version, response=result['specified'].result())
+        latest_version, latest_release_date = \
+                        get_version_and_release_date(req, verbose=verbose,
+                                                     response=result['latest']\
+                                                              .result())
+        specified_version, specified_release_date = \
+                           get_version_and_release_date(req, version,
+                                                        response=result[\
+                                                        'specified'].result())
 
         if latest_release_date and specified_release_date:
             time_delta = (latest_release_date - specified_release_date).days
@@ -166,33 +202,42 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
 
             if verbose:
                 if time_delta > 0:
-                    print('{} ({}) is {} days out of date. Latest is {}'.format(req, version, time_delta, latest_version))
+                    print('{} ({}) is {} days out of date.'
+                          'Latest is {}'.format(req, version, time_delta,
+                                                latest_version))
                 elif not outdated:
                     print('{} ({}) is up to date'.format(req, version))
 
             if latest and latest_version != specified_version:
-                print('{}=={} # Updated from {}'.format(req, latest_version, specified_version))
+                print('{}=={} # Updated from {}'.format(req, latest_version,
+                                                        specified_version))
             elif verbatim and latest_version != specified_version:
-                print('{}=={} # Latest {}'.format(req, specified_version, latest_version))
+                print('{}=={} # Latest {}'.format(req, specified_version,
+                                                  latest_version))
             elif verbatim:
                 print('{}=={}'.format(req, specified_version))
         elif verbatim:
             print('{}=={} # Error checking latest version'.format(req, version))
 
+    verbatim_str = ""
     if verbatim:
-        verbatim = "# Generated with piprot {}\n# ".format(VERSION)
-    else:
-        verbatim = ""
+        verbatim_str = "# Generated with piprot {}\n# ".format(VERSION)
 
     if total_time_delta > 0:
-        print("{}Your requirements are {} days out of date".format(verbatim, total_time_delta))
+        print("{}Your requirements are {}"
+              "days out of date".format(verbatim_str, total_time_delta))
     else:
-        print("{}Looks like you've been keeping up to date, time for a delicious beverage!".format(verbatim))
+        print("{}Looks like you've been keeping up to date,"
+              "time for a delicious beverage!".format(verbatim_str))
 
 
 def output_post_commit():
+    """Asks for email address and filepath from stdin and outputs a sample
+    post-commit hook to stdout
+    """
     email = input('Your email address:')
-    path = input('Full path to requirements[{}/requirements.txt]:'.format(os.getcwd()))
+    path = input('Full path to requirements'
+                 '[{}/requirements.txt]:'.format(os.getcwd()))
 
     if not path:
         path = os.path.join(os.getcwd(), 'requirements.txt')
@@ -208,38 +253,51 @@ def output_post_commit():
 piprot --notify={email} {path}""".format(email=email, path=path))
 
 
-def notify_requirements(email_address, requirements, reset):
-    return requests.post(NOTIFY_URL, data=json.dumps({
-                                        'requirements': requirements,
-                                        'email': email_address,
-                                        'reset': reset}),
-                                     headers={
-                                        'Content-type': 'application/json'
-                                     }).json()
+def notify_requirements(email_address, requirements, reset=False):
+    """Given and email address, list of requirements and optional reset
+    argument subscribes the user to updates from piprot.io. The reset
+    argument is used to reset the subscription to _just_ these packages.
+    """
+    return requests.post(NOTIFY_URL,
+                         data=json.dumps({'requirements': requirements,
+                                          'email': email_address,
+                                          'reset': reset}),
+                         headers={'Content-type': 'application/json'}).json()
 
 
 def piprot():
+    """Parse the command line arguments and jump into the piprot() function
+    (unless the user just wants the post request hook).
+    """
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
     )
     cli_parser.add_argument('-v', '--verbose', action='store_true',
-                            help='verbosity, can be supplied more than once (enabled by default, use --quiet to disable)')
+                            help='verbosity, can be supplied more than once '
+                                 '(enabled by default, use --quiet to disable)')
     cli_parser.add_argument('-l', '--latest', action='store_true',
-                            help='print the lastest available version for out of date requirements')
+                            help='print the lastest available version for out '
+                                 'of date requirements')
     cli_parser.add_argument('-x', '--verbatim', action='store_true',
-                            help='output the full requirements file, with added comments with potential updates')
+                            help='output the full requirements file, with '
+                                 'added comments with potential updates')
     cli_parser.add_argument('-q', '--quiet', action='store_true',
-                            help='be a little less verbose with the output (<0.3 behaviour)')
+                            help='be a little less verbose with the output '
+                                 '(<0.3 behaviour)')
     cli_parser.add_argument('-o', '--outdated', action='store_true',
                             help='only list outdated requirements')
 
     cli_parser.add_argument('-n', '--notify',
-                            help='submit requirements to piprot notify for weekly')
+                            help='submit requirements to piprot notify for '
+                                 'weekly')
     cli_parser.add_argument('-r', '--reset', action='store_true',
-                            help='reset your piprot notify subscriptions, will clear all package subscriptions before adding these requirements')
+                            help='reset your piprot notify subscriptions, will '
+                                 'clear all package subscriptions before '
+                                 'adding these requirements')
 
     cli_parser.add_argument('-p', '--notify-post-commit', action='store_true',
-                            help='output a sample post-commit hook to send requirements to piprot.io after every commit')
+                            help='output a sample post-commit hook to send '
+                                 'requirements to piprot.io after every commit')
 
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
@@ -250,7 +308,8 @@ def piprot():
         default = [open('requirements.txt')]
 
     cli_parser.add_argument('file', nargs=nargs, type=argparse.FileType(),
-                            default=default, help='requirements file(s), use `-` for stdin')
+                            default=default, help='requirements file(s), use '
+                                                  '`-` for stdin')
 
     cli_args = cli_parser.parse_args()
 
@@ -269,8 +328,8 @@ def piprot():
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
-         latest=cli_args.latest, verbatim=cli_args.verbatim, notify=cli_args.notify,
-         reset=cli_args.reset)
+         latest=cli_args.latest, verbatim=cli_args.verbatim,
+         notify=cli_args.notify, reset=cli_args.reset)
 
 
 if __name__ == '__main__':
