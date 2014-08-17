@@ -7,6 +7,7 @@ import re
 import requests
 import sys
 import time
+
 try:
     import cStringIO as StringIO
 except ImportError:
@@ -14,6 +15,9 @@ except ImportError:
         import StringIO
     except ImportError:
         from io import StringIO
+
+from six.moves import input
+
 import json
 
 VERSION = "0.7."
@@ -198,6 +202,24 @@ def main(req_files=[], verbose=False, outdated=False, latest=False,
         print("{}Looks like you've been keeping up to date, time for a delicious beverage!".format(verbatim))
 
 
+def output_post_commit():
+    email = input('Your email address:')
+    path = input('Full path to requirements[{}/requirements.txt]:'.format(os.getcwd()))
+
+    if not path:
+        path = os.path.join(os.getcwd(), 'requirements.txt')
+
+    print("""#!/bin/sh
+#
+# piprot post-commit hook to send your requirements file to piprot.io
+# and ensure you're always getting the latest notification
+#
+# Future enhancement: only run this for commits to a specific branch
+#
+
+piprot --notify={email} {path}""".format(email=email, path=path))
+
+
 def piprot():
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
@@ -218,6 +240,9 @@ def piprot():
     cli_parser.add_argument('-r', '--reset', action='store_true',
                             help='reset your piprot notify subscriptions, will clear all package subscriptions before adding these requirements')
 
+    cli_parser.add_argument('-p', '--notify-post-commit', action='store_true',
+                            help='output a sample post-commit hook to send requirements to piprot.io after every commit')
+
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
     nargs = '+'
@@ -234,13 +259,17 @@ def piprot():
     if len(cli_args.file) > 1 and cli_args.verbatim:
         sys.exit('--verbatim only allowed for single requirements files')
 
-    # call the main function to kick off the real work
     verbose = True
     if cli_args.quiet:
         verbose = False
     elif cli_args.verbatim:
         verbose = False
 
+    if cli_args.notify_post_commit:
+        output_post_commit()
+        sys.exit(1)
+
+    # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim, print_only=False,
          notify=cli_args.notify, reset=cli_args.reset)
