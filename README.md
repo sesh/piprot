@@ -11,7 +11,7 @@ files for freshness.
 
 ### Installation
 
-piprot can be installed via PyPI
+The latest release of piprot can be installed via PyPI:
 
     pip install -U piprot
 
