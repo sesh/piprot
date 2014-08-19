@@ -224,7 +224,7 @@ def main(req_files, verbose=False, outdated=False, latest=False,
         verbatim_str = "# Generated with piprot {}\n# ".format(VERSION)
 
     if total_time_delta > 0:
-        print("{}Your requirements are {}"
+        print("{}Your requirements are {} "
               "days out of date".format(verbatim_str, total_time_delta))
     else:
         print("{}Looks like you've been keeping up to date,"
