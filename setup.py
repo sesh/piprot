@@ -12,7 +12,7 @@ setup(
     author_email='brenton@brntn.me',
     packages=['piprot',],
     url='http://github.com/sesh/piprot',
-    license='LICENSE.txt',
+    license='MIT License',
     description='How rotten are your requirements?',
     long_description=open('README.md').read(),
     entry_points={
@@ -24,5 +24,13 @@ setup(
         'requests',
         'requests-futures',
         'six'
-    ]
+    ],
+    classifiers=(
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Topic :: Utilities'
+    )
 )
