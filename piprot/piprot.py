@@ -20,6 +20,7 @@ from requests_futures.sessions import FuturesSession
 
 VERSION = "0.8.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
+#PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
 
 USE_NOTIFY = True
 NOTIFY_URL = 'https://piprot.io/notify/'
@@ -231,13 +232,13 @@ def main(req_files, verbose=False, outdated=False, latest=False,
               "time for a delicious beverage!".format(verbatim_str))
 
 
-def output_post_commit():
+def output_post_commit(email=None, path=None):
     """Asks for email address and filepath from stdin and outputs a sample
     post-commit hook to stdout
     """
-    email = input('Your email address:')
-    path = input('Full path to requirements'
-                 '[{}/requirements.txt]:'.format(os.getcwd()))
+    email = email or input('Your email address:')
+    path = path or input('Full path to requirements'
+                          '[{}/requirements.txt]:'.format(os.getcwd()))
 
     if not path:
         path = os.path.join(os.getcwd(), 'requirements.txt')
