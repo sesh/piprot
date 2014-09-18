@@ -14,7 +14,7 @@ with open('HISTORY.rst') as f:
 
 setup(
     name='piprot',
-    version='0.8.1',
+    version='0.8.2',
     author='Brenton Cleeland',
     author_email='brenton@brntn.me',
     packages=['piprot',],
