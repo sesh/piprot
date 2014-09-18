@@ -5,16 +5,23 @@ Use pandoc to convert README.md to README.rst before uploading
    pandoc README.md -o README.rst
 """
 
+with open('README.rst', 'r', 'utf-8') as f:
+    readme = f.read()
+
+with open('HISTORY.rst', 'r', 'utf-8') as f:
+    history = f.read()
+
+
 setup(
     name='piprot',
-    version='0.7.2',
-    author='Brenton Cleeland, Mark Hellewell, Dan Peade',
+    version='0.8.0',
+    author='Brenton Cleeland',
     author_email='brenton@brntn.me',
     packages=['piprot',],
     url='http://github.com/sesh/piprot',
     license='MIT License',
     description='How rotten are your requirements?',
-    long_description=open('README.md').read(),
+    long_description=readme + '\n\n' + history,
     entry_points={
         'console_scripts': [
             'piprot = piprot.piprot:piprot',

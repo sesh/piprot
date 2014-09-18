@@ -1,16 +1,18 @@
 # Changelog
 
-## 0.8 - ???
+## 0.8 - 2014-09-19
 
 ### Added
 
 - requests-futures support, making everything a whole heap faster
 - Added documentation for the --latest feature that's been there from the beginning
 - Added --notify-post-commit argument to output a post-commit hook to automatically notify
+- Improved documentation for --notify feature
 
 ### Fixed
 
 - Fixed a bunch of PyLint errors and suggestions
+
 
 ## 0.7.2 - 2014-08-16
 

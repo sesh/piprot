@@ -102,7 +102,7 @@ that have been updated. You can upload your requirements using a command like th
 
     piprot --notify=brenton@piprot.io requirements.txt
 
-This service was created by @sesh (the creator of this tool, me!) and will at some
+This service was created by @sesh (the creator of this tool, me!) and may at some
 point in the future require a small fee for ongoing notifications.
 
 
