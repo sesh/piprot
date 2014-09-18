@@ -5,10 +5,10 @@ Use pandoc to convert README.md to README.rst before uploading
    pandoc README.md -o README.rst
 """
 
-with open('README.rst', 'r', 'utf-8') as f:
+with open('README.rst') as f:
     readme = f.read()
 
-with open('HISTORY.rst', 'r', 'utf-8') as f:
+with open('HISTORY.rst') as f:
     history = f.read()
 
 
