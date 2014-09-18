@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.8.1 - 2014-09-19
+----------------
+
+Fixed
+~~~~~
+
+- Boo boo during the release because of missing HISTORY.rst file
+
+
 0.8 - 2014-09-19
 ----------------
 
@@ -91,4 +100,3 @@ Fixed
 ~~~~~
 
 -  Nothing.
-
