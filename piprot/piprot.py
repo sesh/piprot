@@ -18,7 +18,7 @@ from six.moves import input
 from requests_futures.sessions import FuturesSession
 
 
-VERSION = "0.8.0"
+VERSION = "0.8.2"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 #PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
 
