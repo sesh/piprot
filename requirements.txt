@@ -1,7 +1,7 @@
 # Requirements for Piprot
 # This actually doubles as a test file
 
-requests==2.4.0
-requests-futures==0.9.4
-six==1.7.3
-piprot==0.7.2
+requests==2.4.3
+requests-futures==0.9.5
+six==1.8.0
+piprot==0.8.2
