@@ -13,10 +13,13 @@ import requests
 import sys
 import time
 
+from six import StringIO
 from six.moves import input
 
 from requests_futures.sessions import FuturesSession
 
+from providers.github import build_github_url, get_requirements_from_url, \
+                             pull_request, GithubPullRequestException
 
 VERSION = "0.8.2"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
@@ -124,7 +127,7 @@ def get_version_and_release_date(requirement, version=None,
 
 
 def main(req_files, verbose=False, outdated=False, latest=False,
-         verbatim=False, notify='', reset=False):
+         verbatim=False, notify='', reset=False, repo=None, pr=False):
     """Given a list of requirements files reports which requirements are out
     of date.
 
@@ -139,10 +142,18 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     - reset goes with the notification to decide whether to reset the packages
       subscribed to.
     """
+
+    import ipdb; ipdb.set_trace()
+
     requirements = []
-    for req_file in req_files:
-        requirements.extend(parse_req_file(req_file, verbatim=verbatim))
-        req_file.close()
+
+    if repo:
+        req_file = get_requirements_from_url(build_github_url(repo), verbatim)
+        requirements.extend(parse_req_file(req_file))
+    else:
+        for req_file in req_files:
+            requirements.extend(parse_req_file(req_file, verbatim=verbatim))
+            req_file.close()
 
     total_time_delta = 0
 
@@ -217,6 +228,13 @@ def main(req_files, verbose=False, outdated=False, latest=False,
                                                   latest_version))
             elif verbatim:
                 print('{}=={}'.format(req, specified_version))
+
+            if pr and repo:
+                if latest_version == specified_version:
+                    try:
+                        pull_request(repo, req, latest_version, specified_version)
+                    except GithubPullRequestException, e:
+                        print(e)
         elif verbatim:
             print('{}=={} # Error checking latest version'.format(req, version))
 
@@ -300,12 +318,24 @@ def piprot():
                             help='output a sample post-commit hook to send '
                                  'requirements to piprot.io after every commit')
 
+    cli_parser.add_argument('-g', '--github',
+                            help='Test the requirements from a GitHub repo.'
+                                 'Requires that a `requirements.txt` file'
+                                 'exists in the root of the repository.')
+
+    cli_parser.add_argument('--pr', action='store_true',
+                            help='Create pull requests for out of date requirements')
+
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
     nargs = '+'
+
+    if '--github' in sys.argv or '-g' in sys.argv:
+        nargs = "*"
+
     default = None
     if os.path.isfile('requirements.txt'):
-        nargs = '*'
+        nargs = "*"
         default = [open('requirements.txt')]
 
     cli_parser.add_argument('file', nargs=nargs, type=argparse.FileType(),
@@ -330,7 +360,8 @@ def piprot():
     # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
-         notify=cli_args.notify, reset=cli_args.reset)
+         notify=cli_args.notify, reset=cli_args.reset, repo=cli_args.github,
+         pr=cli_args.github and cli_args.pr)
 
 
 if __name__ == '__main__':
