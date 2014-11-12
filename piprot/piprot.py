@@ -13,13 +13,12 @@ import requests
 import sys
 import time
 
-from six import StringIO
 from six.moves import input
 
 from requests_futures.sessions import FuturesSession
 
-from providers.github import build_github_url, get_requirements_from_url, \
-                             pull_request, GithubPullRequestException
+from providers.github import build_github_url, get_requirements_file_from_url, \
+                             GithubPullRequestException
 
 VERSION = "0.8.2"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
@@ -58,14 +57,18 @@ def parse_req_file(req_file, verbatim=False):
             req_list.append((req_match.group('package'),
                              req_match.group('version')))
         elif requirement_no_comments.startswith('-r'):
-            base_dir = os.path.dirname(os.path.abspath(req_file.name))
+            try:
+                base_dir = os.path.dirname(os.path.abspath(req_file.name))
+            except AttributeError:
+                print('Recursive requirements are not supported in URL based lookups')
+                continue
+
             file_name = requirement_no_comments.split(' ')[1]
             new_path = os.path.join(base_dir, file_name)
             try:
                 if verbatim:
                     req_list.append((None, requirement))
-                req_list.extend(parse_req_file(open(new_path),
-                                               verbatim=verbatim))
+                req_list.extend(parse_req_file(open(new_path), verbatim=verbatim))
             except IOError:
                 print('Failed to import {}'.format(file_name))
         elif verbatim:
@@ -142,13 +145,10 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     - reset goes with the notification to decide whether to reset the packages
       subscribed to.
     """
-
-    import ipdb; ipdb.set_trace()
-
     requirements = []
 
     if repo:
-        req_file = get_requirements_from_url(build_github_url(repo), verbatim)
+        req_file = get_requirements_file_from_url(build_github_url(repo), verbatim)
         requirements.extend(parse_req_file(req_file))
     else:
         for req_file in req_files:
@@ -229,12 +229,6 @@ def main(req_files, verbose=False, outdated=False, latest=False,
             elif verbatim:
                 print('{}=={}'.format(req, specified_version))
 
-            if pr and repo:
-                if latest_version == specified_version:
-                    try:
-                        pull_request(repo, req, latest_version, specified_version)
-                    except GithubPullRequestException, e:
-                        print(e)
         elif verbatim:
             print('{}=={} # Error checking latest version'.format(req, version))
 
