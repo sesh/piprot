@@ -5,20 +5,21 @@ python:
   - "3.4"
 
 env:
-  - REQUESTS_VERSION=1.2.3
-  - REQUESTS_VERSION=2.0.1
-  - REQUESTS_VERSION=2.1.0
-  - REQUESTS_VERSION=2.2.1
   - REQUESTS_VERSION=2.3.0
   - REQUESTS_VERSION=2.4.3
 
 
 # command to install dependencies
 install:
-  - pip install -q six==1.5.2
+  - pip install -q six==1.8.0
   - pip install -q requests==$REQUESTS_VERSION
-  - pip install -q requests-futures==0.9.4
+  - pip install -q requests-futures==0.9.5
+  - pip install -q coverage
+  - pip install -q coveralls
 
 # command to run tests
 script:
-  - python -m unittest discover
+  - coverage run --source piprot -m unittest discover
+
+# report coverage to coveralls.io
+after_success: coveralls
