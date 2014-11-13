@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.9.0 - 2014-11-??
+----------------
+
+Added
+~~~~~
+
+- support for looking up requirements from Github
+
+Fixed
+~~~~~
+
+- previously if two releases were released on the same day this wasn't
+  reported as being out of date.
+
+
 0.8.2 / 0.8.1 - 2014-09-19
 ----------------
 
