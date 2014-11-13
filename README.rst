@@ -110,7 +110,7 @@ supply a `Personal Access Token` to remotely test private repositories.
 
 ::
 
-    > piprot.py -g sesh/piprot
+    > piprot -g sesh/piprot
     requests (2.4.2) is out of date. Latest is 2.4.3
     requests-futures (0.9.5) is up to date
     six (1.8.0) is up to date
