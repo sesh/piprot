@@ -17,7 +17,7 @@ from six.moves import input
 
 from requests_futures.sessions import FuturesSession
 
-from providers.github import build_github_url, get_requirements_file_from_url
+from .providers.github import build_github_url, get_requirements_file_from_url
 
 
 VERSION = "0.9.0"
