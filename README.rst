@@ -103,6 +103,21 @@ better tools for working with packages installed in your environment.
 
     pip freeze | piprot
 
+
+(New in 0.9) You can also lookup requirements from a Github repo with the ``--github``,
+``--branch`` and ``--path`` options. Additionally you can use ``--token`` to
+supply a `Personal Access Token` to remotely test private repositories.
+
+::
+
+    > piprot.py -g sesh/piprot
+    requests (2.4.2) is out of date. Latest is 2.4.3
+    requests-futures (0.9.5) is up to date
+    six (1.8.0) is up to date
+    piprot (0.8.2) is up to date
+    Looks like you've been keeping up to date,time for a delicious beverage!
+
+
 Working with your environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

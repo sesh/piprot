@@ -216,9 +216,12 @@ def main(req_files, verbose=False, outdated=False, latest=False,
 
             if verbose:
                 if time_delta > 0:
-                    print('{} ({}) is {} days out of date.'
+                    print('{} ({}) is {} days out of date. '
                           'Latest is {}'.format(req, version, time_delta,
                                                 latest_version))
+                elif version != latest_version:
+                    print('{} ({}) is out of date. '
+                          'Latest is {}'.format(req, version, latest_version))
                 elif not outdated:
                     print('{} ({}) is up to date'.format(req, version))
 
