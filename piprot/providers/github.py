@@ -1,12 +1,7 @@
 import requests
-from requests.auth import HTTPBasicAuth
-
 from six import StringIO
 
 GITHUB_API_BASE = 'https://api.github.com'
-
-class GithubPullRequestException(Exception):
-    pass
 
 
 def build_github_url(repo, branch='master', path='requirements.txt', token=None):
@@ -31,7 +26,7 @@ def build_github_url(repo, branch='master', path='requirements.txt', token=None)
     return url
 
 
-def get_requirements_file_from_url(url, verbatim=False):
+def get_requirements_file_from_url(url):
     response = requests.get(url)
 
     if response.status_code == 200:

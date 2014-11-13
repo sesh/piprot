@@ -17,10 +17,10 @@ from six.moves import input
 
 from requests_futures.sessions import FuturesSession
 
-from providers.github import build_github_url, get_requirements_file_from_url, \
-                             GithubPullRequestException
+from providers.github import build_github_url, get_requirements_file_from_url
 
-VERSION = "0.8.2"
+
+VERSION = "0.9.0"
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 #PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
 
@@ -150,7 +150,7 @@ def main(req_files, verbose=False, outdated=False, latest=False,
 
     if repo:
         github_url = build_github_url(repo, branch, path, token)
-        req_file = get_requirements_file_from_url(github_url, verbatim)
+        req_file = get_requirements_file_from_url(github_url)
         requirements.extend(parse_req_file(req_file))
     else:
         for req_file in req_files:
@@ -372,10 +372,4 @@ def piprot():
 
 
 if __name__ == '__main__':
-    """
-    Worth testing:
-        python piprot/piprot.py --github sesh/piprot
-        python piprot/piprot.py -g sesh/piprot -b test_out_of_date
-
-    """
     piprot()
