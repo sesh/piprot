@@ -37,7 +37,7 @@ class TestGithubURLs(unittest.TestCase):
         self.assertEqual(url, expected)
 
         response = requests.get(url)
-        req_file = StringIO(response.content)
+        req_file = StringIO(response.text)
         requirements = parse_req_file(req_file)
         self.assertTrue('piprot' in [req for req, version in requirements])
 

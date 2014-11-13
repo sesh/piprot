@@ -1,8 +1,8 @@
 language: python
 python:
   - "2.7"
-  - "3.2"
   - "3.3"
+  - "3.4"
 
 env:
   - REQUESTS_VERSION=1.2.3
@@ -10,6 +10,7 @@ env:
   - REQUESTS_VERSION=2.1.0
   - REQUESTS_VERSION=2.2.1
   - REQUESTS_VERSION=2.3.0
+  - REQUESTS_VERSION=2.4.3
 
 
 # command to install dependencies
