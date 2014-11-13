@@ -372,4 +372,10 @@ def piprot():
 
 
 if __name__ == '__main__':
+    """
+    Worth testing:
+        python piprot/piprot.py --github sesh/piprot
+        python piprot/piprot.py -g sesh/piprot -b test_out_of_date
+
+    """
     piprot()

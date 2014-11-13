@@ -17,7 +17,7 @@ setup(
     version='0.8.2',
     author='Brenton Cleeland',
     author_email='brenton@brntn.me',
-    packages=['piprot',],
+    packages=['piprot', 'piprot.providers'],
     url='http://github.com/sesh/piprot',
     license='MIT License',
     description='How rotten are your requirements?',
