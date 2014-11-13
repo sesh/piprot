@@ -13,6 +13,14 @@ def build_github_url(repo, branch='master', path='requirements.txt', token=None)
     """
     Builds a URL to a file inside a Github repository.
     """
+
+    # args come is as 'None' instead of not being provided
+    if not path:
+        path = 'requirements.txt'
+
+    if not branch:
+        branch = 'master'
+
     url = 'https://raw.githubusercontent.com/{}/{}/{}'.format(
         repo, branch, path
     )

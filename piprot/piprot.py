@@ -130,7 +130,8 @@ def get_version_and_release_date(requirement, version=None,
 
 
 def main(req_files, verbose=False, outdated=False, latest=False,
-         verbatim=False, notify='', reset=False, repo=None, pr=False):
+         verbatim=False, notify='', reset=False, repo=None, path='requirements.txt',
+         token=None, branch='master'):
     """Given a list of requirements files reports which requirements are out
     of date.
 
@@ -148,7 +149,8 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     requirements = []
 
     if repo:
-        req_file = get_requirements_file_from_url(build_github_url(repo), verbatim)
+        github_url = build_github_url(repo, branch, path, token)
+        req_file = get_requirements_file_from_url(github_url, verbatim)
         requirements.extend(parse_req_file(req_file))
     else:
         for req_file in req_files:
@@ -308,17 +310,25 @@ def piprot():
                                  'clear all package subscriptions before '
                                  'adding these requirements')
 
-    cli_parser.add_argument('-p', '--notify-post-commit', action='store_true',
+    cli_parser.add_argument('-c', '--notify-post-commit', action='store_true',
                             help='output a sample post-commit hook to send '
                                  'requirements to piprot.io after every commit')
 
     cli_parser.add_argument('-g', '--github',
-                            help='Test the requirements from a GitHub repo.'
-                                 'Requires that a `requirements.txt` file'
+                            help='Test the requirements from a GitHub repo. '
+                                 'Requires that a `requirements.txt` file '
                                  'exists in the root of the repository.')
 
-    cli_parser.add_argument('--pr', action='store_true',
-                            help='Create pull requests for out of date requirements')
+    cli_parser.add_argument('-b', '--branch',
+                            help='The branch to test requirements from, used with '
+                                 'the Github URL support.')
+
+    cli_parser.add_argument('-t', '--token',
+                            help='Github personal access token to be used with '
+                                 'the Github URL support.')
+
+    cli_parser.add_argument('-p', '--path',
+                            help='Path to requirements file in remote repository.')
 
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
@@ -355,7 +365,7 @@ def piprot():
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
          notify=cli_args.notify, reset=cli_args.reset, repo=cli_args.github,
-         pr=cli_args.github and cli_args.pr)
+         branch=cli_args.branch, path=cli_args.path, token=cli_args.token)
 
 
 if __name__ == '__main__':
