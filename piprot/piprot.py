@@ -18,9 +18,9 @@ from six.moves import input
 from requests_futures.sessions import FuturesSession
 
 from .providers.github import build_github_url, get_requirements_file_from_url
+from . import __version__
 
-
-VERSION = "0.9.0"
+VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 #PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
 

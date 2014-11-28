@@ -4,4 +4,4 @@
 requests==2.4.3
 requests-futures==0.9.5
 six==1.8.0
-piprot==0.8.2
+tox==1.8.1
