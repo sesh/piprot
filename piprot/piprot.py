@@ -131,7 +131,7 @@ def get_version_and_release_date(requirement, version=None,
 
 def main(req_files, verbose=False, outdated=False, latest=False,
          verbatim=False, notify='', reset=False, repo=None, path='requirements.txt',
-         token=None, branch='master'):
+         token=None, branch='master', url=None):
     """Given a list of requirements files reports which requirements are out
     of date.
 
@@ -151,6 +151,9 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     if repo:
         github_url = build_github_url(repo, branch, path, token)
         req_file = get_requirements_file_from_url(github_url)
+        requirements.extend(parse_req_file(req_file))
+    elif url:
+        req_file = get_requirements_file_from_url(url)
         requirements.extend(parse_req_file(req_file))
     else:
         for req_file in req_files:
@@ -333,11 +336,14 @@ def piprot():
     cli_parser.add_argument('-p', '--path',
                             help='Path to requirements file in remote repository.')
 
+    cli_parser.add_argument('-u', '--url',
+                            help='URL to requirements file.')
+
     # if there is a requirements.txt file, use it by default. Otherwise print
     # usage if there are no arguments.
     nargs = '+'
 
-    if '--github' in sys.argv or '-g' in sys.argv:
+    if '--github' in sys.argv or '-g' in sys.argv or '-u' in sys.argv or '--url' in sys.argv:
         nargs = "*"
 
     default = None
@@ -368,7 +374,8 @@ def piprot():
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
          notify=cli_args.notify, reset=cli_args.reset, repo=cli_args.github,
-         branch=cli_args.branch, path=cli_args.path, token=cli_args.token)
+         branch=cli_args.branch, path=cli_args.path, token=cli_args.token,
+         url=cli_args.url)
 
 
 if __name__ == '__main__':

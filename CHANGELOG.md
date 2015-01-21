@@ -8,6 +8,7 @@ Added
 ~~~~~
 
 - support for looking up requirements from Github
+- support for looking up requirements from a given URL
 
 Fixed
 ~~~~~

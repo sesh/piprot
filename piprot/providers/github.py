@@ -30,8 +30,6 @@ def get_requirements_file_from_url(url):
     response = requests.get(url)
 
     if response.status_code == 200:
-        import ipdb; ipdb.set_trace()
-
         return StringIO(response.text)
     else:
         return StringIO("")
