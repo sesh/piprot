@@ -99,6 +99,11 @@ creating a sort-of ''perfect'' requirements file for me,
 Yep, you can use stdin as well if you really want to, but there are
 better tools for working with packages installed in your environment.
 
+::
+
+    pip freeze | piprot
+
+
 The ``--force`` argument will return a non-zero exit code, if requirements
 are out of date. Useful for integrating in an automated testing / CI setup.
 
@@ -109,10 +114,6 @@ are out of date. Useful for integrating in an automated testing / CI setup.
     ipython==2.2.0 # Updated from 1.1.0
     > echo $?
     1
-
-::
-
-    pip freeze | piprot
 
 
 (New in 0.9) You can also lookup requirements from a Github repo with the ``--github``,
