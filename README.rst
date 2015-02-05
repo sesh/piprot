@@ -99,6 +99,17 @@ creating a sort-of ''perfect'' requirements file for me,
 Yep, you can use stdin as well if you really want to, but there are
 better tools for working with packages installed in your environment.
 
+The ``--force`` argument will return a non-zero exit code, if requirements
+are out of date. Useful for integrating in an automated testing / CI setup.
+
+::
+
+    > piprot --force
+    ipython (1.1.0) is 331 days out of date. Latest is 2.2.0
+    ipython==2.2.0 # Updated from 1.1.0
+    > echo $?
+    1
+
 ::
 
     pip freeze | piprot
