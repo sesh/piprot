@@ -129,8 +129,8 @@ def get_version_and_release_date(requirement, version=None,
         return None, None
 
 
-def main(req_files, verbose=False, outdated=False, latest=False,
-         verbatim=False, notify='', reset=False, repo=None, path='requirements.txt',
+def main(req_files, verbose=False, outdated=False, latest=False, verbatim=False,
+         force=False, notify='', reset=False, repo=None, path='requirements.txt',
          token=None, branch='master', url=None):
     """Given a list of requirements files reports which requirements are out
     of date.
@@ -142,6 +142,7 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     - verbatim outputs the requirements file as-is - with comments showing the
       latest versions (can be used with latest to output the latest with the old
       version in the comment)
+    - force exits with a non-zero code if anything is out-of-date
     - notify is a string that should be an email address to upload to piprot.io
     - reset goes with the notification to decide whether to reset the packages
       subscribed to.
@@ -247,8 +248,10 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     if total_time_delta > 0:
         print("{}Your requirements are {} "
               "days out of date".format(verbatim_str, total_time_delta))
+        if force:
+            sys.exit(1)
     else:
-        print("{}Looks like you've been keeping up to date,"
+        print("{}Looks like you've been keeping up to date, "
               "time for a delicious beverage!".format(verbatim_str))
 
 
@@ -307,6 +310,8 @@ def piprot():
                                  '(<0.3 behaviour)')
     cli_parser.add_argument('-o', '--outdated', action='store_true',
                             help='only list outdated requirements')
+    cli_parser.add_argument('-f', '--force', action='store_true',
+                            help='fail if all requirements are not up to date')
 
     cli_parser.add_argument('-n', '--notify',
                             help='submit requirements to piprot notify for '
@@ -372,7 +377,7 @@ def piprot():
 
     # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
-         latest=cli_args.latest, verbatim=cli_args.verbatim,
+         latest=cli_args.latest, verbatim=cli_args.verbatim, force=cli_args.force,
          notify=cli_args.notify, reset=cli_args.reset, repo=cli_args.github,
          branch=cli_args.branch, path=cli_args.path, token=cli_args.token,
          url=cli_args.url)

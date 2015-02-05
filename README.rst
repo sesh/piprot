@@ -115,7 +115,7 @@ supply a `Personal Access Token` to remotely test private repositories.
     requests-futures (0.9.5) is up to date
     six (1.8.0) is up to date
     piprot (0.8.2) is up to date
-    Looks like you've been keeping up to date,time for a delicious beverage!
+    Looks like you've been keeping up to date, time for a delicious beverage!
 
 
 Working with your environment
