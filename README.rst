@@ -104,18 +104,6 @@ better tools for working with packages installed in your environment.
     pip freeze | piprot
 
 
-The ``--force`` argument will return a non-zero exit code, if requirements
-are out of date. Useful for integrating in an automated testing / CI setup.
-
-::
-
-    > piprot --force
-    ipython (1.1.0) is 331 days out of date. Latest is 2.2.0
-    ipython==2.2.0 # Updated from 1.1.0
-    > echo $?
-    1
-
-
 (New in 0.9) You can also lookup requirements from a Github repo with the ``--github``,
 ``--branch`` and ``--path`` options. Additionally you can use ``--token`` to
 supply a `Personal Access Token` to remotely test private repositories.
