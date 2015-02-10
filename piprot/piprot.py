@@ -247,8 +247,9 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     if total_time_delta > 0:
         print("{}Your requirements are {} "
               "days out of date".format(verbatim_str, total_time_delta))
+        sys.exit(1)
     else:
-        print("{}Looks like you've been keeping up to date,"
+        print("{}Looks like you've been keeping up to date, "
               "time for a delicious beverage!".format(verbatim_str))
 
 
