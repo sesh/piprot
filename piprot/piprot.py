@@ -116,16 +116,15 @@ def get_version_and_release_date(requirement, version=None,
         return None, None
 
     try:
-        version = response['info']['stable_version']
-
         if version:
-            release_date = response['releases'][str(version)][0]['upload_time']
+            release_date = response['releases'][version][0]['upload_time']
         else:
-            # some projects use version numbers like 0.04.14 (unidecode) that
-            # parse_version parses as (0.4.14)
-            versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease}
-            version = versions[max(versions.keys())]
-            release_date = response['releases'][str(version)][0]['upload_time']
+            version = response['info']['stable_version']
+
+            if not version:
+                versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease}
+                version = versions[max(versions.keys())]
+                release_date = response['releases'][str(version)][0]['upload_time']
 
         return version, datetime.fromtimestamp(time.mktime(
             time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
