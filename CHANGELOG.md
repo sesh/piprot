@@ -6,7 +6,7 @@
 
 - support for looking up requirements from Github
 - support for looking up requirements from a given URL
-
+- Exit status is set to `1` if requirements are out of data (thanks @skoczen!)
 
 ### Fixed
 
