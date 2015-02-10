@@ -5,20 +5,22 @@ piprot - How rotten are your requirements?
 from __future__ import print_function
 
 import argparse
-from datetime import datetime
 import json
 import os
 import re
-import requests
 import sys
 import time
+from datetime import datetime
 
-from six.moves import input
-
+import requests
 from requests_futures.sessions import FuturesSession
 
-from .providers.github import build_github_url, get_requirements_file_from_url
+from pkg_resources import parse_version
+from six.moves import input
+
 from . import __version__
+from .providers.github import build_github_url, get_requirements_file_from_url
+
 
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
@@ -104,7 +106,7 @@ def get_version_and_release_date(requirement, version=None,
                        'anymore!'.format(requirement, version))
         else:
             if verbose:
-                print ('{} isn\'t even on PyPI. Check that the project '
+                print ('{} isn\'t on PyPI. Check that the project '
                        'still exists!'.format(requirement))
         return None, None
     except ValueError:
@@ -115,9 +117,15 @@ def get_version_and_release_date(requirement, version=None,
 
     try:
         version = response['info']['stable_version']
-        release_date = response['urls'][0]['upload_time']
-        if not version:
-            version = response['info']['version']
+
+        if version:
+            release_date = response['releases'][str(version)][0]['upload_time']
+        else:
+            # some projects use version numbers like 0.04.14 (unidecode) that
+            # parse_version parses as (0.4.14)
+            versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease}
+            version = versions[max(versions.keys())]
+            release_date = response['releases'][str(version)][0]['upload_time']
 
         return version, datetime.fromtimestamp(time.mktime(
             time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')

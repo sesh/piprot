@@ -8,10 +8,13 @@
 - support for looking up requirements from a given URL
 - Exit status is set to `1` if requirements are out of data (thanks @skoczen!)
 
+
 ### Fixed
 
 - previously if two releases were released on the same day this wasn't
   reported as being out of date.
+
+- updated version checking to ensure that prerelease versions are not included
 
 
 ## 0.8.2 / 0.8.1 - 2014-09-19
