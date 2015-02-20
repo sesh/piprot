@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import argparse
 import json
+import operator
 import os
 import re
 import sys
@@ -38,9 +39,6 @@ class PiprotVersion(object):
 
         self.version = version
 
-        if self.version != '{}.{}.{}'.format(self.major, self.minor, self.patch):
-            print('{} {} {} {} {}'.format(version, self.major, self.minor, self.patch, self.is_prerelease()))
-
     def __str__(self):
         return str(self.version)
 
@@ -64,7 +62,17 @@ class PiprotVersion(object):
         if other.is_prerelease():
             return 1
 
+        if self.version == other.version:
+            return 0
+
+        # um, yeah
         return 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
 
     def is_prerelease(self):
         return bool(re.search(r'(a|b|c|rc|alpha|beta|pre|preview|dev|svn|git)', self.version))
@@ -76,7 +84,7 @@ def parse_version(version):
     if len(parts) > 0 and len(parts) < 6:
         # well, that was (fairly) easy
         return PiprotVersion(version, *parts[:4])
-    print(version)
+    return PiprotVersion(version)
 
 
 def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
@@ -171,8 +179,8 @@ def get_version_and_release_date(requirement, version=None,
             version = response['info']['stable_version']
 
             if not version:
-                versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease()}
-                version = versions[max(versions.keys())]
+                versions = {v: parse_version(v) for v in response['releases'].keys() if not parse_version(v).is_prerelease()}
+                version = max(versions.items(), key=operator.itemgetter(1))[0]
                 release_date = response['releases'][str(version)][0]['upload_time']
 
         return version, datetime.fromtimestamp(time.mktime(
