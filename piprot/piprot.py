@@ -15,12 +15,10 @@ from datetime import datetime
 import requests
 from requests_futures.sessions import FuturesSession
 
-from pkg_resources import parse_version
 from six.moves import input
 
 from . import __version__
 from .providers.github import build_github_url, get_requirements_file_from_url
-
 
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
@@ -28,6 +26,57 @@ PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 USE_NOTIFY = True
 NOTIFY_URL = 'https://piprot.io/notify/'
+
+
+class PiprotVersion(object):
+
+    def __init__(self, version, major, minor='0', patch='0', minor_patch='0'):
+        self.major = int(re.sub(r'\D', '', major) or 0)
+        self.minor = int(re.sub(r'\D', '', minor) or 0)
+        self.patch = int(re.sub(r'\D', '', patch) or 0)
+        self.minor_patch = int(re.sub(r'\D', '', minor_patch) or 0)
+
+        self.version = version
+
+        if self.version != '{}.{}.{}'.format(self.major, self.minor, self.patch):
+            print('{} {} {} {} {}'.format(version, self.major, self.minor, self.patch, self.is_prerelease()))
+
+    def __str__(self):
+        return str(self.version)
+
+    def __cmp__(self, other):
+        major = self.major - other.major
+        minor = self.minor - other.minor
+        patch = self.patch - other.patch
+
+        if major != 0:
+            return major
+
+        if minor != 0:
+            return minor
+
+        if patch != 0:
+            return patch
+
+        if self.is_prerelease():
+            return -1
+
+        if other.is_prerelease():
+            return 1
+
+        return 0
+
+    def is_prerelease(self):
+        return bool(re.search(r'(a|b|c|rc|alpha|beta|pre|preview|dev|svn|git)', self.version))
+
+
+def parse_version(version):
+    parts = version.split('.')
+
+    if len(parts) > 0 and len(parts) < 6:
+        # well, that was (fairly) easy
+        return PiprotVersion(version, *parts[:4])
+    print(version)
 
 
 def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
@@ -122,7 +171,7 @@ def get_version_and_release_date(requirement, version=None,
             version = response['info']['stable_version']
 
             if not version:
-                versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease}
+                versions = {parse_version(v): v for v in response['releases'].keys() if not parse_version(v).is_prerelease()}
                 version = versions[max(versions.keys())]
                 release_date = response['releases'][str(version)][0]['upload_time']
 
