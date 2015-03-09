@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 0.9.1
+
+### Fixed
+
+- vendored the version checking code to fix issue with pkg_resources not being
+  available
+
+
 ## 0.9.0
 
 ### Added
