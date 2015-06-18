@@ -1,0 +1,1 @@
+Search.setIndex({envversion:46,filenames:["index"],objects:{},objnames:{},objtypes:{},terms:{check:0,content:0,date:0,ensur:0,file:0,index:0,kept:0,modul:0,page:0,requir:0,search:0,thei:0,your:0},titles:["Welcome to piprot&#8217;s documentation!"],titleterms:{document:0,indic:0,piprot:0,tabl:0,welcom:0}})
