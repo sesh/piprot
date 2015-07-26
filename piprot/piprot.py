@@ -21,6 +21,7 @@ from six.moves import input
 from . import __version__
 from .providers.github import build_github_url, get_requirements_file_from_url
 
+
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 #PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
@@ -31,30 +32,24 @@ NOTIFY_URL = 'https://piprot.io/notify/'
 
 class PiprotVersion(object):
 
-    def __init__(self, version, major, minor='0', patch='0', minor_patch='0'):
-        self.major = int(re.sub(r'\D', '', major) or 0)
-        self.minor = int(re.sub(r'\D', '', minor) or 0)
-        self.patch = int(re.sub(r'\D', '', patch) or 0)
-        self.minor_patch = int(re.sub(r'\D', '', minor_patch) or 0)
-
+    def __init__(self, version, parts):
+        self.parts = [int(re.sub(r'\D', '', p) or 0) for p in parts]
         self.version = version
 
     def __str__(self):
         return str(self.version)
 
     def __cmp__(self, other):
-        major = self.major - other.major
-        minor = self.minor - other.minor
-        patch = self.patch - other.patch
+        if self.version == other.version:
+            return 0
 
-        if major != 0:
-            return major
+        our_parts = self.parts
+        other_parts = other.parts
 
-        if minor != 0:
-            return minor
-
-        if patch != 0:
-            return patch
+        if len(self.parts) == len(other.parts):
+            for us, other in zip(self.parts, other.parts):
+                if us != other:
+                    return us - other
 
         if self.is_prerelease():
             return -1
@@ -83,7 +78,7 @@ def parse_version(version):
 
     if len(parts) > 0 and len(parts) < 6:
         # well, that was (fairly) easy
-        return PiprotVersion(version, *parts[:4])
+        return PiprotVersion(version, parts)
     return PiprotVersion(version)
 
 
