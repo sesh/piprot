@@ -7,7 +7,7 @@ Use pandoc to convert README.md to README.rst before uploading
 
 setup(
     name='piprot',
-    version='0.9.1',
+    version='0.9.2',
     author='Brenton Cleeland',
     author_email='brenton@brntn.me',
     packages=['piprot', 'piprot.providers'],

@@ -46,19 +46,22 @@ class PiprotVersion(object):
         our_parts = self.parts
         other_parts = other.parts
 
-        if len(self.parts) == len(other.parts):
-            for us, other in zip(self.parts, other.parts):
-                if us != other:
-                    return us - other
+        while len(our_parts) > len(other_parts):
+            other_parts.append(0)
+
+        while len(other_parts) > len(our_parts):
+            our_parts.append(0)
+
+        # ensure both _parts_ lists have the same length
+        for us, other in zip(self.parts, other.parts):
+            if us != other:
+                return us - other
 
         if self.is_prerelease():
             return -1
 
         if other.is_prerelease():
             return 1
-
-        if self.version == other.version:
-            return 0
 
         # um, yeah
         return 0
