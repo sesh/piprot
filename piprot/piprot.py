@@ -77,6 +77,7 @@ class PiprotVersion(object):
 
 
 def parse_version(version):
+    version = version.replace('-', '.')
     parts = version.split('.')
 
     if len(parts) > 0 and len(parts) < 6:
