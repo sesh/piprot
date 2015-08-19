@@ -32,7 +32,7 @@ NOTIFY_URL = 'https://piprot.io/notify/'
 
 class PiprotVersion(object):
 
-    def __init__(self, version, parts):
+    def __init__(self, version, parts=[]):
         self.parts = [int(re.sub(r'\D', '', p) or 0) for p in parts]
         self.version = version
 
@@ -77,7 +77,7 @@ class PiprotVersion(object):
 
 
 def parse_version(version):
-    version = version.replace('-', '.')
+    version = version.strip().replace('-', '.')
     parts = version.split('.')
 
     if len(parts) > 0 and len(parts) < 6:
