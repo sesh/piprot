@@ -31,6 +31,11 @@ class TestRequirementsParser(unittest.TestCase):
         self.assertTrue(v3 < v1)
         self.assertTrue(v3 < v2)
 
+    def test_pytz_version(self):
+        v1 = parse_version('2015.4')
+        v2 = parse_version('2010l')
+        self.assertTrue(v2 < v1)
+
     def test_versions(self):
         version_examples = [
             ('2.7.0', [2, 7, 0]),
@@ -49,6 +54,7 @@ class TestRequirementsParser(unittest.TestCase):
             ('1234567', [1234567,]),
             ('1.2.  3', [1, 2, 3]),
             ('1.2.3  ', [1, 2, 3]),
+            ('2014.3', [2014, 3])
 
         ]
 

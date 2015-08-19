@@ -19,5 +19,11 @@ class TestFreshness(unittest.TestCase):
         self.assertEqual(v1, v2)
         self.assertEqual(r1, r2)
 
+    def test_pytz_package(self):
+        v1, r1 = get_version_and_release_date('pytz', '2015.4')
+        v2, r1 = get_version_and_release_date('pytz', '2010l')
+        self.assertTrue(v2 < v1)
+
+
 if __name__ == '__main__':
     unittest.main()

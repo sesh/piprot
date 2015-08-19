@@ -1,6 +1,14 @@
 # Changelog
 
 
+## 0.9.4
+
+- Fixed #48 where pytz would break everything
+
+## 0.9.3
+
+- Brings back proper support for versions with different lengths
+
 ## 0.9.2
 
 - Fixed #42 which affected version numbers with more than three groups
