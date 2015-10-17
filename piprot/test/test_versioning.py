@@ -3,6 +3,7 @@ import unittest
 
 from piprot.piprot import parse_version
 
+
 class TestRequirementsParser(unittest.TestCase):
 
     def test_billiard_versions(self):
@@ -51,7 +52,7 @@ class TestRequirementsParser(unittest.TestCase):
             # 45: Kombu
             ('3.0.17-20140602', [3, 0, 17, 20140602]),
 
-            ('1234567', [1234567,]),
+            ('1234567', [1234567, ]),
             ('1.2.  3', [1, 2, 3]),
             ('1.2.3  ', [1, 2, 3]),
             ('2014.3', [2014, 3])

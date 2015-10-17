@@ -24,7 +24,7 @@ from .providers.github import build_github_url, get_requirements_file_from_url
 
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
-#PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
+# PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
 
 USE_NOTIFY = True
 NOTIFY_URL = 'https://piprot.io/notify/'
@@ -73,7 +73,12 @@ class PiprotVersion(object):
         return self.__cmp__(other) == 0
 
     def is_prerelease(self):
-        return bool(re.search(r'(a|b|c|rc|alpha|beta|pre|preview|dev|svn|git)', self.version))
+        return bool(
+            re.search(
+                r'(a|b|c|rc|alpha|beta|pre|preview|dev|svn|git)',
+                self.version
+            )
+        )
 
 
 def parse_version(version):
@@ -118,7 +123,10 @@ def parse_req_file(req_file, verbatim=False):
             try:
                 base_dir = os.path.dirname(os.path.abspath(req_file.name))
             except AttributeError:
-                print('Recursive requirements are not supported in URL based lookups')
+                print(
+                    'Recursive requirements are not supported in URL based '
+                    'lookups'
+                )
                 continue
 
             file_name = requirement_no_comments.split(' ')[1]
@@ -126,7 +134,12 @@ def parse_req_file(req_file, verbatim=False):
             try:
                 if verbatim:
                     req_list.append((None, requirement))
-                req_list.extend(parse_req_file(open(new_path), verbatim=verbatim))
+                req_list.extend(
+                    parse_req_file(
+                        open(new_path),
+                        verbatim=verbatim
+                    )
+                )
             except IOError:
                 print('Failed to import {}'.format(file_name))
         elif verbatim:
@@ -178,9 +191,14 @@ def get_version_and_release_date(requirement, version=None,
             version = response['info']['stable_version']
 
             if not version:
-                versions = {v: parse_version(v) for v in response['releases'].keys() if not parse_version(v).is_prerelease()}
+                versions = {
+                    v: parse_version(v) for v in response['releases'].keys()
+                    if not parse_version(v).is_prerelease()
+                }
                 version = max(versions.items(), key=operator.itemgetter(1))[0]
-                release_date = response['releases'][str(version)][0]['upload_time']
+                release_date = (
+                    response['releases'][str(version)][0]['upload_time']
+                )
 
         return version, datetime.fromtimestamp(time.mktime(
             time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
@@ -192,9 +210,20 @@ def get_version_and_release_date(requirement, version=None,
         return None, None
 
 
-def main(req_files, verbose=False, outdated=False, latest=False,
-         verbatim=False, notify='', reset=False, repo=None, path='requirements.txt',
-         token=None, branch='master', url=None):
+def main(
+    req_files,
+    verbose=False,
+    outdated=False,
+    latest=False,
+    verbatim=False,
+    notify='',
+    reset=False,
+    repo=None,
+    path='requirements.txt',
+    token=None,
+    branch='master',
+    url=None
+):
     """Given a list of requirements files reports which requirements are out
     of date.
 
@@ -203,8 +232,8 @@ def main(req_files, verbose=False, outdated=False, latest=False,
     - outdated forces piprot to only report out of date packages
     - latest outputs the requirements line with the latest version
     - verbatim outputs the requirements file as-is - with comments showing the
-      latest versions (can be used with latest to output the latest with the old
-      version in the comment)
+      latest versions (can be used with latest to output the latest with the
+      old version in the comment)
     - notify is a string that should be an email address to upload to piprot.io
     - reset goes with the notification to decide whether to reset the packages
       subscribed to.
@@ -235,13 +264,13 @@ def main(req_files, verbose=False, outdated=False, latest=False,
         response = notify_requirements(notify, only_requirements, reset)
 
         if response['status'] == 'OK':
-            print('Your requirements have been uploaded to piprot.io and {} ' \
-                  'will be notified when new version are released. You are ' \
+            print('Your requirements have been uploaded to piprot.io and {} '
+                  'will be notified when new version are released. You are '
                   'tracking {} packages.'.format(response['email'],
                                                  response['package_count']))
             return
         else:
-            print('Something went wrong while uploading to piprot.io, please ' \
+            print('Something went wrong while uploading to piprot.io, please '
                   'file a bug report if this continues')
             return
 
@@ -267,14 +296,13 @@ def main(req_files, verbose=False, outdated=False, latest=False,
         req = result['req']
         version = result['version']
 
-        latest_version, latest_release_date = \
-                        get_version_and_release_date(req, verbose=verbose,
-                                                     response=result['latest']\
-                                                              .result())
+        latest_version, latest_release_date = get_version_and_release_date(
+            req, verbose=verbose, response=result['latest'].result()
+        )
         specified_version, specified_release_date = \
-                           get_version_and_release_date(req, version,
-                                                        response=result[\
-                                                        'specified'].result())
+            get_version_and_release_date(
+                req, version, response=result['specified'].result()
+            )
 
         if latest_release_date and specified_release_date:
             time_delta = (latest_release_date - specified_release_date).days
@@ -301,7 +329,9 @@ def main(req_files, verbose=False, outdated=False, latest=False,
                 print('{}=={}'.format(req, specified_version))
 
         elif verbatim:
-            print('{}=={} # Error checking latest version'.format(req, version))
+            print(
+                '{}=={} # Error checking latest version'.format(req, version)
+            )
 
     verbatim_str = ""
     if verbatim:
@@ -322,7 +352,7 @@ def output_post_commit(email=None, path=None):
     """
     email = email or input('Your email address:')
     path = path or input('Full path to requirements'
-                          '[{}/requirements.txt]:'.format(os.getcwd()))
+                         '[{}/requirements.txt]:'.format(os.getcwd()))
 
     if not path:
         path = os.path.join(os.getcwd(), 'requirements.txt')
@@ -357,9 +387,11 @@ def piprot():
     cli_parser = argparse.ArgumentParser(
         epilog="Here's hoping your requirements are nice and fresh!"
     )
-    cli_parser.add_argument('-v', '--verbose', action='store_true',
-                            help='verbosity, can be supplied more than once '
-                                 '(enabled by default, use --quiet to disable)')
+    cli_parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='verbosity, can be supplied more than once '
+             '(enabled by default, use --quiet to disable)'
+    )
     cli_parser.add_argument('-l', '--latest', action='store_true',
                             help='print the lastest available version for out '
                                  'of date requirements')
@@ -376,29 +408,34 @@ def piprot():
                             help='submit requirements to piprot notify for '
                                  'weekly')
     cli_parser.add_argument('-r', '--reset', action='store_true',
-                            help='reset your piprot notify subscriptions, will '
-                                 'clear all package subscriptions before '
+                            help='reset your piprot notify subscriptions,'
+                                 'will clear all package subscriptions before '
                                  'adding these requirements')
 
-    cli_parser.add_argument('-c', '--notify-post-commit', action='store_true',
-                            help='output a sample post-commit hook to send '
-                                 'requirements to piprot.io after every commit')
+    cli_parser.add_argument(
+        '-c', '--notify-post-commit', action='store_true',
+        help='output a sample post-commit hook to send '
+             'requirements to piprot.io after every commit'
+    )
 
     cli_parser.add_argument('-g', '--github',
                             help='Test the requirements from a GitHub repo. '
                                  'Requires that a `requirements.txt` file '
                                  'exists in the root of the repository.')
 
-    cli_parser.add_argument('-b', '--branch',
-                            help='The branch to test requirements from, used with '
-                                 'the Github URL support.')
+    cli_parser.add_argument(
+        '-b', '--branch',
+        help='The branch to test requirements from, used with '
+             'the Github URL support.')
 
-    cli_parser.add_argument('-t', '--token',
-                            help='Github personal access token to be used with '
-                                 'the Github URL support.')
+    cli_parser.add_argument(
+        '-t', '--token',
+        help='Github personal access token to be used with '
+             'the Github URL support.')
 
-    cli_parser.add_argument('-p', '--path',
-                            help='Path to requirements file in remote repository.')
+    cli_parser.add_argument(
+        '-p', '--path',
+        help='Path to requirements file in remote repository.')
 
     cli_parser.add_argument('-u', '--url',
                             help='URL to requirements file.')
@@ -407,7 +444,12 @@ def piprot():
     # usage if there are no arguments.
     nargs = '+'
 
-    if '--github' in sys.argv or '-g' in sys.argv or '-u' in sys.argv or '--url' in sys.argv:
+    if (
+        '--github' in sys.argv
+        or '-g' in sys.argv
+        or '-u' in sys.argv
+        or '--url' in sys.argv
+    ):
         nargs = "*"
 
     default = None
