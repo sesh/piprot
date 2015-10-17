@@ -10,7 +10,8 @@ class TestRequirementsParser(unittest.TestCase):
         pass
 
     def test_requirement_exact(self):
-        d = main([open('piprot/test/files/pytz_req.txt')])
+        with self.assertRaises(SystemExit):
+            d = main([open('piprot/test/files/pytz_req.txt')])
 
 
 if __name__ == '__main__':
