@@ -19,6 +19,7 @@ install:
 
 # command to run tests
 script:
+  - flake8 .
   - coverage run --source piprot -m unittest discover
 
 # report coverage to coveralls.io
