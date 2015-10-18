@@ -4,7 +4,12 @@ from six import StringIO
 GITHUB_API_BASE = 'https://api.github.com'
 
 
-def build_github_url(repo, branch='master', path='requirements.txt', token=None):
+def build_github_url(
+    repo,
+    branch='master',
+    path='requirements.txt',
+    token=None
+):
     """
     Builds a URL to a file inside a Github repository.
     """
