@@ -16,11 +16,9 @@ install:
   - pip install -q requests-futures==0.9.5
   - pip install -q coverage
   - pip install -q coveralls
-  - pip install -q flake8
 
 # command to run tests
 script:
-  - flake8 .
   - coverage run --source piprot -m unittest discover
 
 # report coverage to coveralls.io
