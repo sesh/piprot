@@ -180,8 +180,8 @@ def get_version_and_release_date(requirement, version=None,
         return None, None
     except ValueError:
         if verbose:
-            print ('Decoding the JSON response for {} ({}) '
-                   'failed'.format(requirement, version))
+            print('Decoding the JSON response for {} ({}) '
+                  'failed'.format(requirement, version))
         return None, None
 
     try:
@@ -195,10 +195,20 @@ def get_version_and_release_date(requirement, version=None,
                     v: parse_version(v) for v in response['releases'].keys()
                     if not parse_version(v).is_prerelease()
                 }
-                version = max(versions.items(), key=operator.itemgetter(1))[0]
-                release_date = (
-                    response['releases'][str(version)][0]['upload_time']
-                )
+
+                # if we still don't have a version, let's pick up a prerelease one
+                if not versions:
+                    versions = {
+                        v: parse_version(v) for v in response['releases'].keys()
+                    }
+
+                if versions:
+                    version = max(versions.items(), key=operator.itemgetter(1))[0]
+                    release_date = (
+                        response['releases'][str(version)][0]['upload_time']
+                    )
+                else:
+                    return None, None
 
         return version, datetime.fromtimestamp(time.mktime(
             time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
