@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.9.5
+
+- Merged #51 to avoid a KeyError when stable_version is unavailable (thanks @federicobond)
 
 ## 0.9.4
 

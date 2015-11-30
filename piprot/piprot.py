@@ -171,12 +171,12 @@ def get_version_and_release_date(requirement, version=None,
     except requests.HTTPError:
         if version:
             if verbose:
-                print ('{} ({}) isn\'t available on PyPI '
-                       'anymore!'.format(requirement, version))
+                print('{} ({}) isn\'t available on PyPI '
+                      'anymore!'.format(requirement, version))
         else:
             if verbose:
-                print ('{} isn\'t on PyPI. Check that the project '
-                       'still exists!'.format(requirement))
+                print('{} isn\'t on PyPI. Check that the project '
+                      'still exists!'.format(requirement))
         return None, None
     except ValueError:
         if verbose:
@@ -205,8 +205,8 @@ def get_version_and_release_date(requirement, version=None,
         ))
     except IndexError:
         if verbose:
-            print ('{} ({}) didn\'t return a date property'.format(requirement,
-                                                                   version))
+            print('{} ({}) didn\'t return a date property'.format(requirement,
+                                                                  version))
         return None, None
 
 

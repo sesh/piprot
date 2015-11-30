@@ -56,7 +56,6 @@ class TestRequirementsParser(unittest.TestCase):
             ('1.2.  3', [1, 2, 3]),
             ('1.2.3  ', [1, 2, 3]),
             ('2014.3', [2014, 3])
-
         ]
 
         for version, parts in version_examples:
