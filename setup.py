@@ -1,9 +1,17 @@
+import sys
 from setuptools import setup
 
 """
 Use pandoc to convert README.md to README.rst before uploading
    pandoc README.md -o README.rst
 """
+
+
+if 'publish' in sys.argv:
+    os.system('python setup.py sdist upload')
+    os.system('python setup.py bdist_wheel upload')
+    sys.exit()
+
 
 setup(
     name='piprot',
