@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from setuptools import setup
 
 """
