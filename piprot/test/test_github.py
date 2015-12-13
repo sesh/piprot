@@ -16,6 +16,11 @@ class TestGithubURLs(unittest.TestCase):
         url2 = build_github_url('sesh/piprot', 'master')
         self.assertEqual(url1, url2)
 
+    def test_absolute_repo_url(self):
+        url1 = build_github_url('sesh/piprot')
+        url2 = build_github_url('https://github.com/sesh/piprot')
+        self.assertEqual(url1, url2)
+
     def test_repo_url_with_branch(self):
         url = build_github_url('sesh/piprot', 'develop')
         expected = 'https://raw.githubusercontent.com/sesh/piprot/develop/requirements.txt'  # noqa
