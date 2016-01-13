@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.6
+
+- Merged #53 / #54 which adds support for a simpler Github repo syntax
+- Allows `-rrequirements.txt` syntax for importing other requirements files. Fixes #57.
+
 ## 0.9.5
 
 - Merged #51 to avoid a KeyError when stable_version is unavailable (thanks @federicobond)
