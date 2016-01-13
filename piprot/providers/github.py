@@ -1,5 +1,9 @@
+"""
+functions to interact with github api
+"""
 import requests
 from six import StringIO
+import re
 
 GITHUB_API_BASE = 'https://api.github.com'
 
@@ -13,6 +17,8 @@ def build_github_url(
     """
     Builds a URL to a file inside a Github repository.
     """
+
+    repo = re.sub(r"^http(s)?://github.com/", "", repo).strip('/')
 
     # args come is as 'None' instead of not being provided
     if not path:
@@ -32,6 +38,7 @@ def build_github_url(
 
 
 def get_requirements_file_from_url(url):
+    """fetches the requiremets from the url"""
     response = requests.get(url)
 
     if response.status_code == 200:
