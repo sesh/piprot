@@ -50,7 +50,7 @@ class TestRequirementsParser(unittest.TestCase):
             )
         ) as f:
             d = parse_req_file(f, verbatim=False)
-            self.assertEqual(len(d), 3)
+            self.assertEqual(len(d), 4)
 
     def test_requirements_file_verbatim(self):
         with open(

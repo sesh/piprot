@@ -129,7 +129,8 @@ def parse_req_file(req_file, verbatim=False):
                 )
                 continue
 
-            file_name = requirement_no_comments.split(' ')[1]
+            # replace the -r and ensure there are no leading spaces
+            file_name = requirement_no_comments.replace('-r', '').strip()
             new_path = os.path.join(base_dir, file_name)
             try:
                 if verbatim:
