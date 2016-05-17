@@ -115,7 +115,7 @@ def parse_req_file(req_file, verbatim=False):
 
         # if matching requirement line (Thing==1.2.3), update dict, continue
         req_match = re.match(
-            r'\s*(?P<package>\S+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
+            r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
             requirement_no_comments
         )
         if req_match:
