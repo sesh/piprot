@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.7
+
+- Merged #62 to add support for `requests[security]` style extras (thanks @zeebonk)
+
 ## 0.9.6
 
 - Merged #53 / #54 which adds support for a simpler Github repo syntax
