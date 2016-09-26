@@ -114,8 +114,10 @@ def parse_req_file(req_file, verbatim=False):
         requirement_no_comments = requirement.split('#')[0].strip()
 
         # if matching requirement line (Thing==1.2.3), update dict, continue
-        req_match = re.match(r'\s*(?P<package>\S+)==(?P<version>\S+)',
-                             requirement_no_comments)
+        req_match = re.match(
+            r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
+            requirement_no_comments
+        )
         if req_match:
             req_list.append((req_match.group('package'),
                              req_match.group('version')))
