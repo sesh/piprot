@@ -117,6 +117,14 @@ supply a `Personal Access Token` to remotely test private repositories.
     piprot (0.8.2) is up to date
     Looks like you've been keeping up to date, time for a delicious beverage!
 
+You can also ignore packages using a norot comment in your requirements file.
+
+::
+   
+   # Inside requirements.txt
+   # Note: two spaces before # norot
+   Django==1.6.5  # norot
+   
 
 Working with your environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
