@@ -10,6 +10,8 @@ requirements files for freshness.
    :alt: piprot Demo
 
    piprot Demo
+
+
 Installation
 ~~~~~~~~~~~~
 
@@ -120,11 +122,11 @@ supply a `Personal Access Token` to remotely test private repositories.
 You can also ignore packages using a norot comment in your requirements file.
 
 ::
-   
+
    # Inside requirements.txt
    # Note: two spaces before # norot
    Django==1.6.5  # norot
-   
+
 
 Working with your environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,35 +137,6 @@ requirements file. Check out
 something similar that's designed for use against the packages that you
 actually have installed.
 
-Notifications
-~~~~~~~~~~~~~
-
-Since version 0.7.0 piprot has had support for uploading your
-requirements to `piprot.io <https://piprot.io>`__ to receive weekly
-notifications about packages that have been updated. You can upload your
-requirements using a command like this:
-
-::
-
-    piprot --notify=brenton@piprot.io requirements.txt
-
-This service was created by @sesh (the creator of this tool, me!) and
-may at some point in the future require a small fee for ongoing
-notifications.
-
-Installing post-commit hook
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can install a simple post-commit hook to automatically upload your
-requirements every time you commit to your repository. Run the following
-command and add the output to ``.git/hook/post-commit``:
-
-::
-
-    piprot --notify-post-commit
-
-You will be asked a few questions to help set up the hook before the
-output.
 
 Tests
 ~~~~~

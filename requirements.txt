@@ -1,9 +1,11 @@
 # Requirements for Piprot
 # This actually doubles as a test file
 
-requests==2.9.1 # Updated from 2.5.1
-requests-futures==0.9.5
-six==1.10.0 # Updated from 1.9.0
-tox==2.3.1 # Updated from 1.8.1
-dropbox==4.0 # Updated from 2.2.0
-flake8==2.5.1 # Updated from 2.4.1
+requests==2.12.3  # norot
+requests-futures==0.9.7
+six==1.10.0
+tox==2.5.0
+flake8==3.2.1
+
+# Generated with piprot 0.9.7
+# Looks like you've been keeping up to date, time for a delicious beverage!

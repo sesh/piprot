@@ -24,10 +24,6 @@ from .providers.github import build_github_url, get_requirements_file_from_url
 
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
-# PYPI_BASE_URL = 'https://warehouse.python.org/pypi'
-
-USE_NOTIFY = True
-NOTIFY_URL = 'https://piprot.io/notify/'
 
 
 class PiprotVersion(object):
@@ -139,7 +135,7 @@ def parse_req_file(req_file, verbatim=False):
             new_path = os.path.join(base_dir, file_name)
             try:
                 if verbatim:
-                    req_list.append((None, requirement))
+                    req_list.append((None, requirement, req_ignore))
                 req_list.extend(
                     parse_req_file(
                         open(new_path),
@@ -149,7 +145,7 @@ def parse_req_file(req_file, verbatim=False):
             except IOError:
                 print('Failed to import {}'.format(file_name))
         elif verbatim:
-            req_list.append((None, requirement))
+            req_list.append((None, requirement, req_ignore))
     return req_list
 
 
@@ -232,8 +228,6 @@ def main(
     outdated=False,
     latest=False,
     verbatim=False,
-    notify='',
-    reset=False,
     repo=None,
     path='requirements.txt',
     token=None,
@@ -250,9 +244,6 @@ def main(
     - verbatim outputs the requirements file as-is - with comments showing the
       latest versions (can be used with latest to output the latest with the
       old version in the comment)
-    - notify is a string that should be an email address to upload to piprot.io
-    - reset goes with the notification to decide whether to reset the packages
-      subscribed to.
     """
     requirements = []
 
@@ -269,27 +260,6 @@ def main(
             req_file.close()
 
     total_time_delta = 0
-
-    if notify and USE_NOTIFY:
-        # Do notify and exit asap
-        only_requirements = {}
-        for req, version in requirements:
-            if req:
-                only_requirements[req] = version
-
-        response = notify_requirements(notify, only_requirements, reset)
-
-        if response['status'] == 'OK':
-            print('Your requirements have been uploaded to piprot.io and {} '
-                  'will be notified when new version are released. You are '
-                  'tracking {} packages.'.format(response['email'],
-                                                 response['package_count']))
-            return
-        else:
-            print('Something went wrong while uploading to piprot.io, please '
-                  'file a bug report if this continues')
-            return
-
     session = FuturesSession()
     results = []
 
@@ -311,7 +281,10 @@ def main(
             continue
 
         if result['ignore']:
-            print('Ignoring updates for {}. '.format(result['req']))
+            if verbatim:
+                print('{}=={}  # norot'.format(result['req'], result['version']))
+            else:
+                print('Ignoring updates for {}. '.format(result['req']))
             continue
 
         req = result['req']
@@ -341,17 +314,17 @@ def main(
                     print('{} ({}) is up to date'.format(req, version))
 
             if latest and latest_version != specified_version:
-                print('{}=={} # Updated from {}'.format(req, latest_version,
+                print('{}=={}  # Updated from {}'.format(req, latest_version,
                                                         specified_version))
             elif verbatim and latest_version != specified_version:
-                print('{}=={} # Latest {}'.format(req, specified_version,
+                print('{}=={}  # Latest {}'.format(req, specified_version,
                                                   latest_version))
             elif verbatim:
                 print('{}=={}'.format(req, specified_version))
 
         elif verbatim:
             print(
-                '{}=={} # Error checking latest version'.format(req, version)
+                '{}=={}  # Error checking latest version'.format(req, version)
             )
 
     verbatim_str = ""
@@ -365,40 +338,6 @@ def main(
     else:
         print("{}Looks like you've been keeping up to date, "
               "time for a delicious beverage!".format(verbatim_str))
-
-
-def output_post_commit(email=None, path=None):
-    """Asks for email address and filepath from stdin and outputs a sample
-    post-commit hook to stdout
-    """
-    email = email or input('Your email address:')
-    path = path or input('Full path to requirements'
-                         '[{}/requirements.txt]:'.format(os.getcwd()))
-
-    if not path:
-        path = os.path.join(os.getcwd(), 'requirements.txt')
-
-    print("""#!/bin/sh
-#
-# piprot post-commit hook to send your requirements file to piprot.io
-# and ensure you're always getting the latest notification
-#
-# Future enhancement: only run this for commits to a specific branch
-#
-
-piprot --notify={email} {path}""".format(email=email, path=path))
-
-
-def notify_requirements(email_address, requirements, reset=False):
-    """Given and email address, list of requirements and optional reset
-    argument subscribes the user to updates from piprot.io. The reset
-    argument is used to reset the subscription to _just_ these packages.
-    """
-    return requests.post(NOTIFY_URL,
-                         data=json.dumps({'requirements': requirements,
-                                          'email': email_address,
-                                          'reset': reset}),
-                         headers={'Content-type': 'application/json'}).json()
 
 
 def piprot():
@@ -424,20 +363,6 @@ def piprot():
                                  '(<0.3 behaviour)')
     cli_parser.add_argument('-o', '--outdated', action='store_true',
                             help='only list outdated requirements')
-
-    cli_parser.add_argument('-n', '--notify',
-                            help='submit requirements to piprot notify for '
-                                 'weekly')
-    cli_parser.add_argument('-r', '--reset', action='store_true',
-                            help='reset your piprot notify subscriptions,'
-                                 'will clear all package subscriptions before '
-                                 'adding these requirements')
-
-    cli_parser.add_argument(
-        '-c', '--notify-post-commit', action='store_true',
-        help='output a sample post-commit hook to send '
-             'requirements to piprot.io after every commit'
-    )
 
     cli_parser.add_argument('-g', '--github',
                             help='Test the requirements from a GitHub repo. '
@@ -493,16 +418,11 @@ def piprot():
     elif cli_args.verbatim:
         verbose = False
 
-    if cli_args.notify_post_commit:
-        output_post_commit()
-        return
-
     # call the main function to kick off the real work
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
-         notify=cli_args.notify, reset=cli_args.reset, repo=cli_args.github,
-         branch=cli_args.branch, path=cli_args.path, token=cli_args.token,
-         url=cli_args.url)
+         repo=cli_args.github, branch=cli_args.branch, path=cli_args.path,
+         token=cli_args.token, url=cli_args.url)
 
 
 if __name__ == '__main__':

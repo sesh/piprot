@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 0.9.8
+
+- Removed support for the (defunct) piprot.io service
+- Merged #68 to add support for ignoring out of date packages with `# norot`
+
 ## 0.9.7
 
 - Merged #62 to add support for `requests[security]` style extras (thanks @zeebonk)

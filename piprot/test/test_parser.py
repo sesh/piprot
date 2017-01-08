@@ -49,6 +49,17 @@ class TestRequirementsParser(unittest.TestCase):
             reqs = [x[0] for x in d]
             self.assertTrue('ipython' in reqs)
 
+    def test_ignore_in_requirements_file(self):
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                'files/test-requirements.txt'
+            )
+        ) as f:
+            d = parse_req_file(f, verbatim=False)
+            ignored = [x[0] for x in d if x[2]]
+            self.assertTrue('piprot' in ignored)
+
     def test_requirements_length(self):
         with open(
             os.path.join(os.path.dirname(__file__), 'files/_develop.txt')
@@ -64,7 +75,7 @@ class TestRequirementsParser(unittest.TestCase):
             )
         ) as f:
             d = parse_req_file(f, verbatim=False)
-            self.assertEqual(len(d), 4)
+            self.assertEqual(len(d), 5)
 
     def test_requirements_file_verbatim(self):
         with open(
