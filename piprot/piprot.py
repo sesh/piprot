@@ -105,7 +105,7 @@ def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
 
 
 def parse_req_file(req_file, verbatim=False):
-    """Take a file and return a dict of (requirement, versions) based
+    """Take a file and return a dict of (requirement, versions, ignore) based
     on the files requirements specs.
     """
     req_list = []
@@ -118,9 +118,12 @@ def parse_req_file(req_file, verbatim=False):
             r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
             requirement_no_comments
         )
+        req_ignore = requirement.strip().endswith('  # norot')
+
         if req_match:
             req_list.append((req_match.group('package'),
-                             req_match.group('version')))
+                             req_match.group('version'),
+                             req_ignore))
         elif requirement_no_comments.startswith('-r'):
             try:
                 base_dir = os.path.dirname(os.path.abspath(req_file.name))
@@ -290,13 +293,14 @@ def main(
     session = FuturesSession()
     results = []
 
-    for req, version in requirements:
+    for req, version, ignore in requirements:
         if verbatim and not req:
             results.append(version)
         elif req:
             results.append({
                 'req': req,
                 'version': version,
+                'ignore': ignore,
                 'latest': session.get(get_pypi_url(req)),
                 'specified': session.get(get_pypi_url(req, version))
             })
@@ -304,6 +308,10 @@ def main(
     for result in results:
         if isinstance(result, str):
             print(result.replace('\n', ''))
+            continue
+
+        if result['ignore']:
+            print('Ignoring updates for {}. '.format(result['req']))
             continue
 
         req = result['req']
