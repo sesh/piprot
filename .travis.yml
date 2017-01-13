@@ -11,11 +11,25 @@ env:
 
 # command to install dependencies
 install:
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION 
+
+  - source activate test-environment
   - pip install -q six==1.8.0
   - pip install -q requests==$REQUESTS_VERSION
   - pip install -q requests-futures==0.9.5
   - pip install -q coverage
   - pip install -q coveralls
+  - pip install -q pyyaml
 
 # command to run tests
 script:

@@ -6,6 +6,7 @@ requests-futures==0.9.7
 six==1.10.0
 tox==2.5.0
 flake8==3.2.1
+pyyaml=3.12
 
 # Generated with piprot 0.9.7
 # Looks like you've been keeping up to date, time for a delicious beverage!

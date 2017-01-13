@@ -31,7 +31,8 @@ setup(
     install_requires=[
         'requests',
         'requests-futures',
-        'six'
+        'six',
+        'pyyaml'
     ],
     classifiers=(
         'Development Status :: 4 - Beta',
