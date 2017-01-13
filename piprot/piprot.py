@@ -19,8 +19,12 @@ from six.moves import input
 from . import __version__
 from .providers.github import build_github_url, get_requirements_file_from_url
 from .providers.conda import package_info
-from itertools import izip_longest
 
+try:
+    from itertools import zip_longest as zip_longest
+except ImportError:
+    # Python 2
+    from itertools import izip_longest as zip_longest
 
 VERSION = __version__
 PYPI_BASE_URL = 'https://pypi.python.org/pypi'
@@ -41,7 +45,7 @@ class PiprotVersion(object):
 
     def __cmp__(self, other):
         if self.is_prerelease() == other.is_prerelease():
-            for us, them in izip_longest(self.parts, other.parts, fillvalue='0'):
+            for us, them in zip_longest(self.parts, other.parts, fillvalue='0'):
                 if us != them:
                     if us.isdigit() and them.isdigit():
                         return cmp(int(us), int(them))
@@ -76,6 +80,10 @@ class PiprotVersion(object):
     @property
     def conda_buildversion(self):
         return self.version + "=" + self.buildlabel
+
+
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 
 def parse_version(version, release_date=None, buildlabel='0'):
@@ -137,7 +145,7 @@ def fetch_pypi_versions(requirement, verbose=False, base_url=PYPI_BASE_URL):
 
         pypi_response = response.json()
         releases = {
-            v: parse_version(v, parse_date(value)) for v, value in pypi_response['releases'].iteritems() if value
+            v: parse_version(v, parse_date(value)) for v, value in pypi_response['releases'].items() if value
         }
         latest_stable = pypi_response['info'].get('stable_version')
         if not latest_stable:
@@ -186,49 +194,53 @@ def parse_req_file(req_file, verbatim=False):
     on the files requirements specs.
     """
     req_list = []
-    requirements = req_file.readlines()
-    for requirement in requirements:
-        requirement_no_comments = requirement.split('#')[0].strip()
 
-        # if matching requirement line (Thing==1.2.3), update dict, continue
-        req_match = re.match(
-            r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
-            requirement_no_comments
-        )
-        req_ignore = requirement.strip().endswith('  # norot')
+    try:
+        for requirement in req_file:
+            requirement_no_comments = requirement.split('#')[0].strip()
 
-        if req_match:
-            req_list.append(("pip",
-                             req_match.group('package'),
-                             req_match.group('version'),
-                             req_ignore))
-        elif requirement_no_comments.startswith('-r'):
-            try:
-                base_dir = os.path.dirname(os.path.abspath(req_file.name))
-            except AttributeError:
-                print(
-                    'Recursive requirements are not supported in URL based '
-                    'lookups'
-                )
-                continue
+            # if matching requirement line (Thing==1.2.3), update dict, continue
+            req_match = re.match(
+                r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
+                requirement_no_comments
+            )
+            req_ignore = requirement.strip().endswith('  # norot')
 
-            # replace the -r and ensure there are no leading spaces
-            file_name = requirement_no_comments.replace('-r', '').strip()
-            new_path = os.path.join(base_dir, file_name)
-            try:
-                if verbatim:
-                    req_list.append(("pip", None, requirement, req_ignore))
-                req_list.extend(
-                    parse_req_file(
-                        open(new_path),
-                        verbatim=verbatim
+            if req_match:
+                req_list.append(("pip",
+                                 req_match.group('package'),
+                                 req_match.group('version'),
+                                 req_ignore))
+            elif requirement_no_comments.startswith('-r'):
+                try:
+                    base_dir = os.path.dirname(os.path.abspath(req_file.name))
+                except AttributeError:
+                    print(
+                        'Recursive requirements are not supported in URL based '
+                        'lookups'
                     )
-                )
-            except IOError:
-                print('Failed to import {}'.format(file_name))
-        elif verbatim:
-            req_list.append(("pip", None, requirement, req_ignore))
-    return req_list
+                    continue
+
+                # replace the -r and ensure there are no leading spaces
+                file_name = requirement_no_comments.replace('-r', '').strip()
+                new_path = os.path.join(base_dir, file_name)
+                try:
+                    if verbatim:
+                        req_list.append(("pip", None, requirement, req_ignore))
+                    req_list.extend(
+                        parse_req_file(
+                            open(new_path),
+                            verbatim=verbatim
+                        )
+                    )
+                except IOError:
+                    print('Failed to import {}'.format(file_name))
+            elif verbatim:
+                req_list.append(("pip", None, requirement, req_ignore))
+        return req_list
+
+    finally:
+        req_file.close()
 
 
 def parse_conda_file(conda_file, verbatim=False):
@@ -236,18 +248,22 @@ def parse_conda_file(conda_file, verbatim=False):
     on the conda environment specs.
     """
     req_list = []
-    parsed_environment = yaml.load(conda_file)
-    for item in parsed_environment['dependencies']:
-        if isinstance(item, basestring):
-            package, version = item.split("=", 1)
-            req_list.append(("conda", package, version, False))
 
-        elif isinstance(item, dict) and 'pip' in item:
-            for pipitem in item['pip']:
-                package, version = pipitem.split("==", 1)
-                req_list.append(("pip", package, version, False))
+    try:
+        parsed_environment = yaml.load(conda_file)
+        for item in parsed_environment['dependencies']:
+            if isinstance(item, str):
+                package, version = item.split("=", 1)
+                req_list.append(("conda", package, version, False))
 
-    return req_list
+            elif isinstance(item, dict) and 'pip' in item:
+                for pipitem in item['pip']:
+                    package, version = pipitem.split("==", 1)
+                    req_list.append(("pip", package, version, False))
+
+        return req_list
+    finally:
+        conda_file.close()
 
 
 def main(
@@ -286,7 +302,6 @@ def main(
     else:
         for req_file in req_files:
             requirements.extend(parse_file(req_file, verbatim=verbatim))
-            req_file.close()
 
     total_time_delta = 0
     results = []
