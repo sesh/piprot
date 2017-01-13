@@ -45,7 +45,7 @@ class TestGithubURLs(unittest.TestCase):
         response = requests.get(url)
         req_file = StringIO(response.text)
         requirements = parse_req_file(req_file)
-        self.assertTrue('requests' in [req for req, version, ignore in requirements])
+        self.assertTrue('requests' in [req for provider, req, version, ignore in requirements])
 
 
 if __name__ == '__main__':

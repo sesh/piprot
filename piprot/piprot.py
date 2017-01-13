@@ -5,12 +5,10 @@ piprot - How rotten are your requirements?
 from __future__ import print_function
 
 import argparse
-import json
-import operator
 import os
 import re
 import sys
-import time
+import yaml
 from datetime import datetime
 
 import requests
@@ -20,6 +18,8 @@ from six.moves import input
 
 from . import __version__
 from .providers.github import build_github_url, get_requirements_file_from_url
+from .providers.conda import package_info
+from itertools import izip_longest
 
 
 VERSION = __version__
@@ -28,30 +28,27 @@ PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 class PiprotVersion(object):
 
-    def __init__(self, version, parts=[]):
-        self.parts = [int(re.sub(r'\D', '', p) or 0) for p in parts]
+    def __init__(self, version, parts=[], buildlabel='', release_date=None):
+        self.parts = [part.strip() for part in parts]
         self.version = version
+        self.buildlabel = buildlabel
+        self.release_date = release_date
 
     def __str__(self):
+        if self.buildlabel:
+            return str(self.conda_buildversion)
         return str(self.version)
 
     def __cmp__(self, other):
-        if self.version == other.version:
-            return 0
+        if self.is_prerelease() == other.is_prerelease():
+            for us, them in izip_longest(self.parts, other.parts, fillvalue='0'):
+                if us != them:
+                    if us.isdigit() and them.isdigit():
+                        return cmp(int(us), int(them))
+                    return cmp(us, them)
 
-        our_parts = self.parts
-        other_parts = other.parts
-
-        # ensure both _parts_ lists have the same length
-        while len(our_parts) > len(other_parts):
-            other_parts.append(0)
-
-        while len(other_parts) > len(our_parts):
-            our_parts.append(0)
-
-        for us, them in zip(self.parts, other.parts):
-            if us != them:
-                return us - them
+            if self.buildlabel != other.buildlabel:
+                return cmp(self.buildlabel, other.buildlabel)
 
         if self.is_prerelease():
             return -1
@@ -76,28 +73,112 @@ class PiprotVersion(object):
             )
         )
 
+    @property
+    def conda_buildversion(self):
+        return self.version + "=" + self.buildlabel
 
-def parse_version(version):
+
+def parse_version(version, release_date=None, buildlabel='0'):
     version = version.strip().replace('-', '.')
     parts = version.split('.')
 
     if len(parts) > 0 and len(parts) < 6:
         # well, that was (fairly) easy
-        return PiprotVersion(version, parts)
-    return PiprotVersion(version)
+        return PiprotVersion(version, parts, buildlabel=buildlabel, release_date=release_date)
+    return PiprotVersion(version, buildlabel=buildlabel, release_date=release_date)
 
 
-def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
+def get_version(provider, requirement, version, conda_basepath=None, verbose=False):
+    """
+    Get the versions for a requirement.
+
+    :param prodiver: the name of the dependency provider, can be either pip or conda
+    :param version: the current version
+    :param verbose: print if versions are not available
+    :returns: the current version, current releasedate, latest version, latest releasedate
+    """
+
+    if provider == "pip":
+        releases, latest_stable = fetch_pypi_versions(requirement, verbose)
+    elif provider == "conda":
+        releases, latest_stable = fetch_conda_versions(requirement, conda_basepath, verbose)
+    else:
+        raise RuntimeError("Unknown provider '%s'", provider)
+
+    if version in releases:
+        return version, releases[version].release_date, \
+            latest_stable, releases[latest_stable].release_date
+
+    elif verbose:
+        print('{} ({}) isn\'t available on anymore!'.format(requirement, version))
+
+    return None, None, None, None
+
+
+def fetch_pypi_versions(requirement, verbose=False, base_url=PYPI_BASE_URL):
     """
     Get the PyPI url for a given requirement and optional version number and
     PyPI base URL. The default base url is 'https://pypi.python.org/pypi'
     """
-    if version:
-        return '{base}/{req}/{version}/json'.format(base=base_url,
-                                                    req=requirement,
-                                                    version=version)
-    else:
-        return '{base}/{req}/json'.format(base=base_url, req=requirement)
+    try:
+        url = '{base}/{req}/json'.format(base=base_url, req=requirement)
+        response = requests.get(url)
+
+        # see if the url is 404'ing because it has been redirected
+        if response.status_code == 404:
+            root_url = url.rpartition('/')[0]
+            res = requests.head(root_url)
+            if res.status_code == 301:
+                new_location = res.headers['location'] + '/json'
+                response = requests.get(new_location)
+
+        def parse_date(value):
+            return datetime.strptime(value[0]['upload_time'], '%Y-%m-%dT%H:%M:%S')
+
+        pypi_response = response.json()
+        releases = {
+            v: parse_version(v, parse_date(value)) for v, value in pypi_response['releases'].iteritems() if value
+        }
+        latest_stable = pypi_response['info'].get('stable_version')
+        if not latest_stable:
+            # did not find stable version, use max defined by PiprotVersion cmp
+            latest_stable = max(releases.values()).version
+
+        return releases, latest_stable
+
+    except requests.HTTPError:
+        if verbose:
+            print('{} isn\'t on PyPI. Check that the project '
+                  'still exists!'.format(requirement))
+    except ValueError:
+        if verbose:
+            print('Decoding the JSON response for {} '
+                  'failed'.format(requirement))
+
+    return None, None
+
+
+def fetch_conda_versions(requirement, conda_basepath=None, verbose=False):
+    conda_response = package_info(requirement, conda_basepath)
+
+    def parse_date(release_date):
+        return datetime.strptime(release_date, '%Y-%m-%d')
+
+    versions = [parse_version(v['version'], parse_date(v['date']), v['build']) for v in conda_response[requirement]]
+
+    version_dict = {}
+    for v in versions:
+        version_dict[v.conda_buildversion] = v
+        version_dict[v.version] = max(v, version_dict.get(v.version, v))
+
+    max_version = max(versions).conda_buildversion
+    return version_dict, max_version
+
+
+def parse_file(file, verbatim=False):
+    if file.name.endswith(".yml"):
+        return parse_conda_file(file, verbatim)
+    return parse_req_file(file, verbatim)
 
 
 def parse_req_file(req_file, verbatim=False):
@@ -117,7 +198,8 @@ def parse_req_file(req_file, verbatim=False):
         req_ignore = requirement.strip().endswith('  # norot')
 
         if req_match:
-            req_list.append((req_match.group('package'),
+            req_list.append(("pip",
+                             req_match.group('package'),
                              req_match.group('version'),
                              req_ignore))
         elif requirement_no_comments.startswith('-r'):
@@ -135,7 +217,7 @@ def parse_req_file(req_file, verbatim=False):
             new_path = os.path.join(base_dir, file_name)
             try:
                 if verbatim:
-                    req_list.append((None, requirement, req_ignore))
+                    req_list.append(("pip", None, requirement, req_ignore))
                 req_list.extend(
                     parse_req_file(
                         open(new_path),
@@ -145,81 +227,27 @@ def parse_req_file(req_file, verbatim=False):
             except IOError:
                 print('Failed to import {}'.format(file_name))
         elif verbatim:
-            req_list.append((None, requirement, req_ignore))
+            req_list.append(("pip", None, requirement, req_ignore))
     return req_list
 
 
-def get_version_and_release_date(requirement, version=None,
-                                 verbose=False, response=None):
-    """Given a requirement and optional version returns a (version, releasedate)
-    tuple. Defaults to the latest version. Prints to stdout if verbose is True.
-    Optional response argument is the response from PyPI to be used for
-    asyncronous lookups.
+def parse_conda_file(conda_file, verbatim=False):
+    """Take a file an return a dict of (requirement, versions, ignore) based
+    on the conda environment specs.
     """
-    try:
-        if not response:
-            url = get_pypi_url(requirement, version)
-            response = requests.get(url)
+    req_list = []
+    parsed_environment = yaml.load(conda_file)
+    for item in parsed_environment['dependencies']:
+        if isinstance(item, basestring):
+            package, version = item.split("=", 1)
+            req_list.append(("conda", package, version, False))
 
-        # see if the url is 404'ing because it has been redirected
-        if response.status_code == 404:
-            root_url = url.rpartition('/')[0]
-            res = requests.head(root_url)
-            if res.status_code == 301:
-                new_location = res.headers['location'] + '/json'
-                response = requests.get(new_location)
+        elif isinstance(item, dict) and 'pip' in item:
+            for pipitem in item['pip']:
+                package, version = pipitem.split("==", 1)
+                req_list.append(("pip", package, version, False))
 
-        response = response.json()
-    except requests.HTTPError:
-        if version:
-            if verbose:
-                print('{} ({}) isn\'t available on PyPI '
-                      'anymore!'.format(requirement, version))
-        else:
-            if verbose:
-                print('{} isn\'t on PyPI. Check that the project '
-                      'still exists!'.format(requirement))
-        return None, None
-    except ValueError:
-        if verbose:
-            print('Decoding the JSON response for {} ({}) '
-                  'failed'.format(requirement, version))
-        return None, None
-
-    try:
-        if version:
-            release_date = response['releases'][version][0]['upload_time']
-        else:
-            version = response['info'].get('stable_version')
-
-            if not version:
-                versions = {
-                    v: parse_version(v) for v in response['releases'].keys()
-                    if not parse_version(v).is_prerelease()
-                }
-
-                # if we still don't have a version, let's pick up a prerelease one
-                if not versions:
-                    versions = {
-                        v: parse_version(v) for v in response['releases'].keys()
-                    }
-
-                if versions:
-                    version = max(versions.items(), key=operator.itemgetter(1))[0]
-                    release_date = (
-                        response['releases'][str(version)][0]['upload_time']
-                    )
-                else:
-                    return None, None
-
-        return version, datetime.fromtimestamp(time.mktime(
-            time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
-        ))
-    except IndexError:
-        if verbose:
-            print('{} ({}) didn\'t return a date property'.format(requirement,
-                                                                  version))
-        return None, None
+    return req_list
 
 
 def main(
@@ -230,6 +258,7 @@ def main(
     verbatim=False,
     repo=None,
     path='requirements.txt',
+    conda_basepath=None,
     token=None,
     branch='master',
     url=None
@@ -256,14 +285,13 @@ def main(
         requirements.extend(parse_req_file(req_file))
     else:
         for req_file in req_files:
-            requirements.extend(parse_req_file(req_file, verbatim=verbatim))
+            requirements.extend(parse_file(req_file, verbatim=verbatim))
             req_file.close()
 
     total_time_delta = 0
-    session = FuturesSession()
     results = []
 
-    for req, version, ignore in requirements:
+    for provider, req, version, ignore in requirements:
         if verbatim and not req:
             results.append(version)
         elif req:
@@ -271,8 +299,7 @@ def main(
                 'req': req,
                 'version': version,
                 'ignore': ignore,
-                'latest': session.get(get_pypi_url(req)),
-                'specified': session.get(get_pypi_url(req, version))
+                'specified_latest': get_version(provider, req, version, conda_basepath, verbose=verbose)
             })
 
     for result in results:
@@ -290,20 +317,15 @@ def main(
         req = result['req']
         version = result['version']
 
-        latest_version, latest_release_date = get_version_and_release_date(
-            req, verbose=verbose, response=result['latest'].result()
-        )
-        specified_version, specified_release_date = \
-            get_version_and_release_date(
-                req, version, response=result['specified'].result()
-            )
+        (specified_version, specified_release_date,
+         latest_version, latest_release_date) = result['specified_latest']
 
         if latest_release_date and specified_release_date:
             time_delta = (latest_release_date - specified_release_date).days
             total_time_delta = total_time_delta + time_delta
 
             if verbose:
-                if time_delta > 0:
+                if time_delta != 0:
                     print('{} ({}) is {} days out of date. '
                           'Latest is {}'.format(req, version, time_delta,
                                                 latest_version))
@@ -315,10 +337,10 @@ def main(
 
             if latest and latest_version != specified_version:
                 print('{}=={}  # Updated from {}'.format(req, latest_version,
-                                                        specified_version))
+                                                         specified_version))
             elif verbatim and latest_version != specified_version:
                 print('{}=={}  # Latest {}'.format(req, specified_version,
-                                                  latest_version))
+                                                   latest_version))
             elif verbatim:
                 print('{}=={}'.format(req, specified_version))
 
@@ -383,6 +405,10 @@ def piprot():
         '-p', '--path',
         help='Path to requirements file in remote repository.')
 
+    cli_parser.add_argument(
+        '-c', '--conda_path',
+        help='Path to conda installation to use.')
+
     cli_parser.add_argument('-u', '--url',
                             help='URL to requirements file.')
 
@@ -398,10 +424,14 @@ def piprot():
     ):
         nargs = "*"
 
-    default = None
+    default = []
     if os.path.isfile('requirements.txt'):
         nargs = "*"
-        default = [open('requirements.txt')]
+        default.append(open('requirements.txt'))
+
+    if os.path.isfile("environment.yml"):
+        nargs = "*"
+        default.append(open('environment.yml'))
 
     cli_parser.add_argument('file', nargs=nargs, type=argparse.FileType(),
                             default=default, help='requirements file(s), use '
@@ -422,7 +452,7 @@ def piprot():
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
          repo=cli_args.github, branch=cli_args.branch, path=cli_args.path,
-         token=cli_args.token, url=cli_args.url)
+         conda_basepath=cli_args.conda_path, token=cli_args.token, url=cli_args.url)
 
 
 if __name__ == '__main__':

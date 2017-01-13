@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import unittest
-
 from piprot.piprot import parse_version
 
 
@@ -37,25 +36,30 @@ class TestRequirementsParser(unittest.TestCase):
         v2 = parse_version('2010l')
         self.assertTrue(v2 < v1)
 
+    def test_openssl_version(self):
+        v1 = parse_version('1.0.2j')
+        v2 = parse_version('1.0.2i')
+        self.assertTrue(v2 < v1)
+
     def test_versions(self):
         version_examples = [
-            ('2.7.0', [2, 7, 0]),
-            ('0.9.2', [0, 9, 2]),
+            ('2.7.0', ['2', '7', '0']),
+            ('0.9.2', ['0', '9', '2']),
 
             # 42: Billiard
-            ('0.9.2.2', [0, 9, 2, 2]),
+            ('0.9.2.2', ['0', '9', '2', '2']),
 
             # 42: regex
-            ('2014.12.24', [2014, 12, 24]),
-            ('2013-12-31', [2013, 12, 31]),
+            ('2014.12.24', ['2014', '12', '24']),
+            ('2013-12-31', ['2013', '12', '31']),
 
             # 45: Kombu
-            ('3.0.17-20140602', [3, 0, 17, 20140602]),
+            ('3.0.17-20140602', ['3', '0', '17', '20140602']),
 
-            ('1234567', [1234567, ]),
-            ('1.2.  3', [1, 2, 3]),
-            ('1.2.3  ', [1, 2, 3]),
-            ('2014.3', [2014, 3])
+            ('1234567', ['1234567']),
+            ('1.2.  3', ['1', '2', '3']),
+            ('1.2.3  ', ['1', '2', '3']),
+            ('2014.3', ['2014', '3'])
         ]
 
         for version, parts in version_examples:

@@ -1,0 +1,5 @@
+name: py27
+dependencies:
+- ipython=1.1.0
+- pip:
+  - requests==2.12.4
