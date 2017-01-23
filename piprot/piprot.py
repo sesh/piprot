@@ -32,8 +32,8 @@ PYPI_BASE_URL = 'https://pypi.python.org/pypi'
 
 class PiprotVersion(object):
 
-    def __init__(self, version, parts=[], buildlabel='', release_date=None):
-        self.parts = [part.strip() for part in parts]
+    def __init__(self, version, parts=None, buildlabel='', release_date=None):
+        self.parts = [part.strip() for part in parts or []]
         self.version = version
         self.buildlabel = buildlabel
         self.release_date = release_date
