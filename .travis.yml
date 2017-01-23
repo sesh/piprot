@@ -26,7 +26,6 @@ install:
   - source activate test-environment
   - pip install -q six==1.8.0
   - pip install -q requests==$REQUESTS_VERSION
-  - pip install -q requests-futures==0.9.5
   - pip install -q coverage
   - pip install -q coveralls
   - pip install -q pyyaml

@@ -2,7 +2,6 @@
 # This actually doubles as a test file
 
 requests==2.12.3  # norot
-requests-futures==0.9.7
 six==1.10.0
 tox==2.5.0
 flake8==3.2.1

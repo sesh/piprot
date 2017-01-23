@@ -12,7 +12,6 @@ import yaml
 from datetime import datetime
 
 import requests
-from requests_futures.sessions import FuturesSession
 
 from six.moves import input
 
@@ -100,7 +99,7 @@ def get_version(provider, requirement, version, conda_basepath=None, verbose=Fal
     """
     Get the versions for a requirement.
 
-    :param prodiver: the name of the dependency provider, can be either pip or conda
+    :param provider: the name of the dependency provider, can be either pip or conda
     :param version: the current version
     :param verbose: print if versions are not available
     :returns: the current version, current releasedate, latest version, latest releasedate
