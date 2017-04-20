@@ -263,7 +263,10 @@ def main(
     session = FuturesSession()
     results = []
 
-    for req, version, ignore in list(set(requirements)):
+    if not verbatim:
+        requirements = list(set(requirements))
+
+    for req, version, ignore in requirements:
         if verbatim and not req:
             results.append(version)
         elif req:
