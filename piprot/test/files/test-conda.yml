@@ -1,0 +1,12 @@
+name: TestEnv
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=2.7.13
+  - Bottleneck=1.2.0
+  - pip:
+    - amqp==2.1.4
+    - analytics-python==1.2.6
+    - "-egit+https://github.com/joshowen/django-debug-toolbar-redis.git@794974207e9aa15f797a5de1c9636998195b6a94#egg=django-debug-toolbar-redis"
+    - django-extensions==1.7.5

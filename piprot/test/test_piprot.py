@@ -12,6 +12,10 @@ class TestRequirementsParser(unittest.TestCase):
         with self.assertRaises(SystemExit):
             main([open('piprot/test/files/pytz_req.txt')])
 
+    def test_conda_exact(self):
+        with self.assertRaises(SystemExit):
+            main([open('piprot/test/files/test-conda.yml')])
+
 
 if __name__ == '__main__':
     unittest.main()

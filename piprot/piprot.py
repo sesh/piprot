@@ -196,50 +196,52 @@ def parse_req_file(req_file, verbatim=False):
 
     try:
         for requirement in req_file:
-            requirement_no_comments = requirement.split('#')[0].strip()
+            for req_tuple in parse_req_line(req_file, requirement, verbatim):
+                req_list.append(req_tuple)
 
-            # if matching requirement line (Thing==1.2.3), update dict, continue
-            req_match = re.match(
-                r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
-                requirement_no_comments
-            )
-            req_ignore = requirement.strip().endswith('  # norot')
-
-            if req_match:
-                req_list.append(("pip",
-                                 req_match.group('package'),
-                                 req_match.group('version'),
-                                 req_ignore))
-            elif requirement_no_comments.startswith('-r'):
-                try:
-                    base_dir = os.path.dirname(os.path.abspath(req_file.name))
-                except AttributeError:
-                    print(
-                        'Recursive requirements are not supported in URL based '
-                        'lookups'
-                    )
-                    continue
-
-                # replace the -r and ensure there are no leading spaces
-                file_name = requirement_no_comments.replace('-r', '').strip()
-                new_path = os.path.join(base_dir, file_name)
-                try:
-                    if verbatim:
-                        req_list.append(("pip", None, requirement, req_ignore))
-                    req_list.extend(
-                        parse_req_file(
-                            open(new_path),
-                            verbatim=verbatim
-                        )
-                    )
-                except IOError:
-                    print('Failed to import {}'.format(file_name))
-            elif verbatim:
-                req_list.append(("pip", None, requirement, req_ignore))
         return req_list
-
     finally:
         req_file.close()
+
+
+def parse_req_line(req_file, req_line, verbatim=False):
+    requirement_no_comments = req_line.split('#')[0].strip()
+
+    # if matching requirement line (Thing==1.2.3), update dict, continue
+    req_match = re.match(
+        r'\s*(?P<package>[^\s\[\]]+)(?P<extras>\[\S+\])?==(?P<version>\S+)',
+        requirement_no_comments
+    )
+    req_ignore = req_line.strip().endswith('  # norot')
+    if req_match:
+        yield "pip", req_match.group('package'), req_match.group('version'), req_ignore
+
+    elif requirement_no_comments.startswith('-r'):
+        try:
+            base_dir = os.path.dirname(os.path.abspath(req_file.name))
+
+        except AttributeError:
+            print(
+                'Recursive requirements are not supported in URL based '
+                'lookups'
+            )
+            return
+
+        # replace the -r and ensure there are no leading spaces
+        file_name = requirement_no_comments.replace('-r', '').strip()
+        new_path = os.path.join(base_dir, file_name)
+        try:
+            if verbatim:
+                yield "pip", None, req_line, req_ignore
+
+            for external_req in parse_req_file(open(new_path), verbatim=verbatim):
+                yield external_req
+
+        except IOError:
+            print('Failed to import {}'.format(file_name))
+
+    elif verbatim:
+        yield "pip", None, req_line, req_ignore
 
 
 def parse_conda_file(conda_file, verbatim=False):
@@ -257,8 +259,8 @@ def parse_conda_file(conda_file, verbatim=False):
 
             elif isinstance(item, dict) and 'pip' in item:
                 for pipitem in item['pip']:
-                    package, version = pipitem.split("==", 1)
-                    req_list.append(("pip", package, version, False))
+                    for reqtuple in parse_req_line(conda_file, pipitem, verbatim):
+                        req_list.append(reqtuple)
 
         return req_list
     finally:
