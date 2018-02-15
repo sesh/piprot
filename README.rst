@@ -1,5 +1,3 @@
-NOTE: This package is no longer actively maintained. If you're interested in taking over maintenance, please get in touch.
-
 piprot
 ======
 
