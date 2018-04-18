@@ -232,7 +232,8 @@ def main(
     path='requirements.txt',
     token=None,
     branch='master',
-    url=None
+    url=None,
+    delay=None,
 ):
     """Given a list of requirements files reports which requirements are out
     of date.
@@ -244,6 +245,7 @@ def main(
     - verbatim outputs the requirements file as-is - with comments showing the
       latest versions (can be used with latest to output the latest with the
       old version in the comment)
+    - delay specifies a timerange during an outdated package is allowed
     """
     requirements = []
 
@@ -260,6 +262,7 @@ def main(
             req_file.close()
 
     total_time_delta = 0
+    max_outdated_time = 0
     session = FuturesSession()
     results = []
 
@@ -301,6 +304,7 @@ def main(
         if latest_release_date and specified_release_date:
             time_delta = (latest_release_date - specified_release_date).days
             total_time_delta = total_time_delta + time_delta
+            max_outdated_time = max(time_delta, max_outdated_time)
 
             if verbose:
                 if time_delta > 0:
@@ -331,9 +335,18 @@ def main(
     if verbatim:
         verbatim_str = "# Generated with piprot {}\n# ".format(VERSION)
 
-    if total_time_delta > 0:
+    if total_time_delta > 0 and delay is None:
         print("{}Your requirements are {} "
               "days out of date".format(verbatim_str, total_time_delta))
+        sys.exit(1)
+    elif delay is not None and max_outdated_time > int(delay):
+        print("{}At least one of your dependancies is {} "
+              "days out of date which is more than the allowed"
+              "{} days.".format(verbatim_str, max_outdated_time, delay))
+        sys.exit(1)
+    elif delay is not None and max_outdated_time <= int(delay):
+        print("{}All of your dependancies are at most {} "
+              "days out of date.".format(verbatim_str, delay))
         sys.exit(1)
     else:
         print("{}Looks like you've been keeping up to date, "
@@ -383,6 +396,11 @@ def piprot():
         '-p', '--path',
         help='Path to requirements file in remote repository.')
 
+    cli_parser.add_argument(
+        '-d', '--delay',
+        help='Delay before an outdated package triggers an error.'
+             '(in days, default to 1).')
+
     cli_parser.add_argument('-u', '--url',
                             help='URL to requirements file.')
 
@@ -422,7 +440,7 @@ def piprot():
     main(req_files=cli_args.file, verbose=verbose, outdated=cli_args.outdated,
          latest=cli_args.latest, verbatim=cli_args.verbatim,
          repo=cli_args.github, branch=cli_args.branch, path=cli_args.path,
-         token=cli_args.token, url=cli_args.url)
+         token=cli_args.token, url=cli_args.url, delay=cli_args.delay)
 
 
 if __name__ == '__main__':
