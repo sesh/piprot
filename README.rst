@@ -127,6 +127,16 @@ You can also ignore packages using a norot comment in your requirements file.
    # Note: two spaces before # norot
    Django==1.6.5  # norot
 
+You can set up a delay before piprot throws an error.
+This is useful when you set up piprot in CI but cannot always upgrade the dependencies.
+
+::
+
+    > piprot --delay 7
+    ipython (1.1.0) is 5 days out of date. Latest is 1.1.1
+    All of your dependancies are at most 7 days out of date.
+    # Displays a warning but does not throw an error
+
 
 Working with your environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
