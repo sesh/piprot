@@ -24,6 +24,9 @@ class TestFreshness(unittest.TestCase):
         v2, r1 = get_version_and_release_date('pytz', '2010l')
         self.assertTrue(v2 < v1)
 
+    def test_bad_version_number(self):
+        v1, r1 = get_version_and_release_date('unidecode', '0.4.21')
+        v1, r1 = get_version_and_release_date('unidecode', '0.04.21')
 
 if __name__ == '__main__':
     unittest.main()

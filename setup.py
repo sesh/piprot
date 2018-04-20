@@ -15,7 +15,7 @@ if 'publish' in sys.argv:
 
 setup(
     name='piprot',
-    version='0.9.8',
+    version='0.9.10',
     author='Brenton Cleeland',
     author_email='brenton@brntn.me',
     packages=['piprot', 'piprot.providers'],
@@ -33,16 +33,14 @@ setup(
         'requests-futures',
         'six'
     ],
-    classifiers=(
-        'Development Status :: 4 - Beta',
+    classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Topic :: Utilities',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4'
-    )
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ]
 )

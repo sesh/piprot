@@ -188,7 +188,10 @@ def get_version_and_release_date(requirement, version=None,
 
     try:
         if version:
-            release_date = response['releases'][version][0]['upload_time']
+            if version in response['releases']:
+                release_date = response['releases'][version][0]['upload_time']
+            else:
+                return None, None
         else:
             version = response['info'].get('stable_version')
 

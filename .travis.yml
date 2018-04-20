@@ -11,7 +11,7 @@ env:
 
 # command to install dependencies
 install:
-  - pip install -q six==1.8.0
+  - pip install -q six==1.11.0
   - pip install -q requests==$REQUESTS_VERSION
   - pip install -q requests-futures==0.9.5
   - pip install -q coverage

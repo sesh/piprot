@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.10
+
+- Fix issue #73: missing versions are ignored (thanks @jedie)
+
+## 0.9.9
+
+- Added support for `--delay` option (thanks @clement-escolano)
 
 ## 0.9.8
 

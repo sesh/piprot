@@ -1,11 +1,6 @@
-# Requirements for Piprot
-# This actually doubles as a test file
-
-requests==2.12.3  # norot
+requests==2.18.4
 requests-futures==0.9.7
-six==1.10.0
-tox==2.5.0
-flake8==3.2.1
-
-# Generated with piprot 0.9.7
-# Looks like you've been keeping up to date, time for a delicious beverage!
+six==1.11.0  # Updated from 1.10.0
+tox==3.0.0  # Updated from 2.5.0
+flake8==3.5.0  # Updated from 3.2.1
+unidecode==0.04.21
