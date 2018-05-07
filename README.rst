@@ -6,10 +6,8 @@ How rotten are your requirements?
 tl;dr: piprot allows you to check the requirements defined in your
 requirements files for freshness.
 
-.. figure:: http://i.imgur.com/kewPaFa.gif
-   :alt: piprot Demo
-
-   piprot Demo
+.. image:: https://asciinema.org/a/2rW7dFFCKuv6g5taaUdZ70jyF.png
+   :target: https://asciinema.org/a/2rW7dFFCKuv6g5taaUdZ70jyF
 
 
 Installation
