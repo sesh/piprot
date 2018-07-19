@@ -23,7 +23,7 @@ from .providers.github import build_github_url, get_requirements_file_from_url
 
 
 VERSION = __version__
-PYPI_BASE_URL = 'https://pypi.python.org/pypi'
+PYPI_BASE_URL = 'https://pypi.org/pypi'
 
 
 class PiprotVersion(object):
@@ -90,7 +90,7 @@ def parse_version(version):
 def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
     """
     Get the PyPI url for a given requirement and optional version number and
-    PyPI base URL. The default base url is 'https://pypi.python.org/pypi'
+    PyPI base URL. The default base url is 'https://pypi.org/pypi'
     """
     if version:
         return '{base}/{req}/{version}/json'.format(base=base_url,
