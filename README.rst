@@ -132,7 +132,7 @@ This is useful when you set up piprot in CI but cannot always upgrade the depend
 
     > piprot --delay 7
     ipython (1.1.0) is 5 days out of date. Latest is 1.1.1
-    All of your dependancies are at most 7 days out of date.
+    All of your dependencies are at most 7 days out of date.
     # Displays a warning but does not throw an error
 
 
