@@ -5,18 +5,14 @@ piprot - How rotten are your requirements?
 from __future__ import print_function
 
 import argparse
-import json
 import operator
 import os
 import re
 import sys
-import time
 from datetime import datetime
 
 import requests
 from requests_futures.sessions import FuturesSession
-
-from six.moves import input
 
 from . import __version__
 from .providers.github import build_github_url, get_requirements_file_from_url
@@ -87,17 +83,12 @@ def parse_version(version):
     return PiprotVersion(version)
 
 
-def get_pypi_url(requirement, version=None, base_url=PYPI_BASE_URL):
+def get_pypi_url(requirement, base_url=PYPI_BASE_URL):
     """
     Get the PyPI url for a given requirement and optional version number and
     PyPI base URL. The default base url is 'https://pypi.python.org/pypi'
     """
-    if version:
-        return '{base}/{req}/{version}/json'.format(base=base_url,
-                                                    req=requirement,
-                                                    version=version)
-    else:
-        return '{base}/{req}/json'.format(base=base_url, req=requirement)
+    return '{base}/{req}/json'.format(base=base_url, req=requirement)
 
 
 def parse_req_file(req_file, verbatim=False):
@@ -149,80 +140,68 @@ def parse_req_file(req_file, verbatim=False):
     return req_list
 
 
-def get_version_and_release_date(requirement, version=None,
-                                 verbose=False, response=None):
-    """Given a requirement and optional version returns a (version, releasedate)
-    tuple. Defaults to the latest version. Prints to stdout if verbose is True.
-    Optional response argument is the response from PyPI to be used for
-    asyncronous lookups.
+def get_release_date(release):
+    """Given the data of a release from the PyPI API, finds the earliest upload time
+    among downloads provided, and returns it as a datetime object.
+    """
+    date_string = min(release, key=operator.itemgetter('upload_time'))['upload_time']
+    return datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
+
+
+def parse_pypi_response(requirement, version=None, verbose=False, response=None):
+    """Given a requirement and optional version returns latest version number of
+    the requirement - and if the current version number is provided - how many
+    days the current version is out of date (number of days between the
+    specified version and the latest version) and for how long it's been out of
+    date (the number of days since the first more recent release).
     """
     try:
         if not response:
-            url = get_pypi_url(requirement, version)
+            url = get_pypi_url(requirement)
             response = requests.get(url)
-
-        # see if the url is 404'ing because it has been redirected
-        if response.status_code == 404:
-            root_url = url.rpartition('/')[0]
-            res = requests.head(root_url)
-            if res.status_code == 301:
-                new_location = res.headers['location'] + '/json'
-                response = requests.get(new_location)
 
         response = response.json()
     except requests.HTTPError:
-        if version:
-            if verbose:
-                print('{} ({}) isn\'t available on PyPI '
-                      'anymore!'.format(requirement, version))
-        else:
-            if verbose:
-                print('{} isn\'t on PyPI. Check that the project '
-                      'still exists!'.format(requirement))
-        return None, None
+        if verbose:
+            print('{} isn\'t on PyPI. Check that the project '
+                  'still exists!'.format(requirement))
+        return None, None, None
     except ValueError:
         if verbose:
-            print('Decoding the JSON response for {} ({}) '
-                  'failed'.format(requirement, version))
-        return None, None
+            print('Decoding the JSON response for {} failed'.format(requirement))
+        return None, None, None
 
-    try:
-        if version:
-            if version in response['releases']:
-                release_date = response['releases'][version][0]['upload_time']
-            else:
-                return None, None
-        else:
-            version = response['info'].get('stable_version')
+    if version:
+        specified_version = parse_version(version)
 
-            if not version:
-                versions = {
-                    v: parse_version(v) for v in response['releases'].keys()
-                    if not parse_version(v).is_prerelease()
-                }
+    versions = {
+        v: parse_version(v) for v in response['releases'].keys()
+        if not parse_version(v).is_prerelease()
+    }
 
-                # if we still don't have a version, let's pick up a prerelease one
-                if not versions:
-                    versions = {
-                        v: parse_version(v) for v in response['releases'].keys()
-                    }
+    if not versions:
+        # include prerelease versions if we don't have any from the above list
+        versions = {
+            v: parse_version(v) for v in response['releases'].keys()
+        }
 
-                if versions:
-                    version = max(versions.items(), key=operator.itemgetter(1))[0]
-                    release_date = (
-                        response['releases'][str(version)][0]['upload_time']
-                    )
-                else:
-                    return None, None
+    latest_version = None
+    outdated_amount = 0
+    outdated_for = 0
 
-        return version, datetime.fromtimestamp(time.mktime(
-            time.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
-        ))
-    except IndexError:
-        if verbose:
-            print('{} ({}) didn\'t return a date property'.format(requirement,
-                                                                  version))
-        return None, None
+    if versions:
+        latest_version = max(versions.values())
+
+        if version and version in versions and specified_version < latest_version:
+            specified_release_date = get_release_date(response['releases'][version])
+            latest_release_date = get_release_date(response['releases'][latest_version.version])
+            outdated_amount = (latest_release_date - specified_release_date).days
+
+            first_newer = min([v for v in versions.values() if v > specified_version])
+            first_newer_release_date = get_release_date(response['releases'][first_newer.version])
+            outdated_for = (datetime.utcnow() - first_newer_release_date).days
+
+    return latest_version.version, outdated_amount, outdated_for
 
 
 def main(
@@ -277,8 +256,7 @@ def main(
                 'req': req,
                 'version': version,
                 'ignore': ignore,
-                'latest': session.get(get_pypi_url(req)),
-                'specified': session.get(get_pypi_url(req, version))
+                'pypi': session.get(get_pypi_url(req))
             })
 
     for result in results:
@@ -296,38 +274,38 @@ def main(
         req = result['req']
         version = result['version']
 
-        latest_version, latest_release_date = get_version_and_release_date(
-            req, verbose=verbose, response=result['latest'].result()
+        latest_version, outdated_amount, outdated_for = parse_pypi_response(
+            req, version, verbose, response=result['pypi'].result()
         )
-        specified_version, specified_release_date = \
-            get_version_and_release_date(
-                req, version, response=result['specified'].result()
-            )
 
-        if latest_release_date and specified_release_date:
-            time_delta = (latest_release_date - specified_release_date).days
-            total_time_delta = total_time_delta + time_delta
-            max_outdated_time = max(time_delta, max_outdated_time)
+        if latest_version:
+            total_time_delta = total_time_delta + outdated_amount
+            max_outdated_time = max(outdated_for, max_outdated_time)
 
             if verbose:
-                if time_delta > 0:
+                if outdated_for or outdated_amount:
                     print('{} ({}) is {} days out of date. '
-                          'Latest is {}'.format(req, version, time_delta,
-                                                latest_version))
+                          'Latest is {} and is {} days newer'.format(
+                              req,
+                              version,
+                              outdated_for,
+                              latest_version,
+                              outdated_amount
+                          ))
                 elif version != latest_version:
                     print('{} ({}) is out of date. '
                           'Latest is {}'.format(req, version, latest_version))
                 elif not outdated:
                     print('{} ({}) is up to date'.format(req, version))
 
-            if latest and latest_version != specified_version:
+            if latest and latest_version != version:
                 print('{}=={}  # Updated from {}'.format(req, latest_version,
-                                                        specified_version))
-            elif verbatim and latest_version != specified_version:
-                print('{}=={}  # Latest {}'.format(req, specified_version,
-                                                  latest_version))
+                                                         version))
+            elif verbatim and latest_version != version:
+                print('{}=={}  # Latest {}'.format(req, version,
+                                                   latest_version))
             elif verbatim:
-                print('{}=={}'.format(req, specified_version))
+                print('{}=={}'.format(req, version))
 
         elif verbatim:
             print(
@@ -343,8 +321,8 @@ def main(
               "days out of date".format(verbatim_str, total_time_delta))
         sys.exit(1)
     elif delay is not None and max_outdated_time > int(delay):
-        print("{}At least one of your dependancies is {} "
-              "days out of date which is more than the allowed"
+        print("{}At least one of your dependencies has been out "
+              "of date for {} days which is more than the allowed "
               "{} days.".format(verbatim_str, max_outdated_time, delay))
         sys.exit(1)
     elif delay is not None and max_outdated_time <= int(delay):
