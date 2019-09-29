@@ -1,6 +1,6 @@
 -r _develop.txt
 -rpytz_req.txt
 
-Django==1.11.22
+Django==1.5.4
 requests==1.2.3
 piprot==0.7.0  # norot
