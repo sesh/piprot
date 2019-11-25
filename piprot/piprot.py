@@ -343,14 +343,13 @@ def main(
               "days out of date".format(verbatim_str, total_time_delta))
         sys.exit(1)
     elif delay is not None and max_outdated_time > int(delay):
-        print("{}At least one of your dependancies is {} "
+        print("{}At least one of your dependencies is {} "
               "days out of date which is more than the allowed"
               "{} days.".format(verbatim_str, max_outdated_time, delay))
         sys.exit(1)
     elif delay is not None and max_outdated_time <= int(delay):
-        print("{}All of your dependancies are at most {} "
+        print("{}All of your dependencies are at most {} "
               "days out of date.".format(verbatim_str, delay))
-        sys.exit(1)
     else:
         print("{}Looks like you've been keeping up to date, "
               "time for a delicious beverage!".format(verbatim_str))
