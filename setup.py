@@ -15,7 +15,7 @@ if 'publish' in sys.argv:
 
 setup(
     name='piprot',
-    version='0.9.10',
+    version='0.9.11',
     author='Brenton Cleeland',
     author_email='brenton@brntn.me',
     packages=['piprot', 'piprot.providers'],

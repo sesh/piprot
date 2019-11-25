@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.11
+
+- Update Travis config to use more recent Python and requests version
+- Merge PR #78: Use clean exit code when --delay is used and no deps are too outdated (thanks @tenzer)
+- Merge PR #77: Use new PyPI URL in order to avoid redirects for each request (thanks @tenzer)
+
+
 ## 0.9.10
 
 - Fix issue #73: missing versions are ignored (thanks @jedie)
