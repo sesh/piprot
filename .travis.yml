@@ -6,9 +6,8 @@ python:
   - "3.7"
 
 env:
-  - REQUESTS_VERSION=2.3.0
-  - REQUESTS_VERSION=2.4.3
-
+  - REQUESTS_VERSION=2.18.4
+  - REQUESTS_VERSION=2.22.0
 
 # command to install dependencies
 install:
