@@ -1,2 +1,6 @@
 include *.txt
 include *.rst
+include *.md
+recursive-include piprot *.py
+recursive-include piprot *.txt
+include tox.ini
