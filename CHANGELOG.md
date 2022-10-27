@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0
+
+- FIX: PyPI no longer returns "releases" in the specific version URL, just use the package base URL always
+- Remove the requests / requests-futures requirement in favour of `thttp` (this will have a performance impact for large project because the async request futures is no longer used)
+
 ## 0.9.11
 
 - Update Travis config to use more recent Python and requests version

@@ -4,16 +4,14 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
-
-env:
-  - REQUESTS_VERSION=2.18.4
-  - REQUESTS_VERSION=2.22.0
+  - "3.8"
+  - "3.9"
+  - "3.10"
+  - "3.11"
 
 # command to install dependencies
 install:
   - pip install -q six==1.11.0
-  - pip install -q requests==$REQUESTS_VERSION
-  - pip install -q requests-futures==0.9.5
   - pip install -q coverage
   - pip install -q coveralls
 
