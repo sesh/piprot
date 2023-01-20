@@ -37,9 +37,9 @@ class TestGithubURLs(unittest.TestCase):
         self.assertEqual(url, expected)
 
     def test_full_github_requirements_test(self):
-        url = build_github_url("sesh/piprot", path="requirements.txt")
+        url = build_github_url("sesh/piprot", branch="dc1057d95b97dd706c4c8bbe8e3733dfaaf472b8", path="requirements.txt")
 
-        expected = "https://raw.githubusercontent.com/sesh/piprot/master/requirements.txt"  # noqa
+        expected = "https://raw.githubusercontent.com/sesh/piprot/dc1057d95b97dd706c4c8bbe8e3733dfaaf472b8/requirements.txt"  # noqa
         self.assertEqual(url, expected)
 
         response = request(url)
